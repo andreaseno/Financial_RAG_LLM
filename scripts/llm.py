@@ -98,6 +98,14 @@ try:
         {"role": "system", "content": system_prompt},
     ]
     # LLM loop
+    # Process:
+    # - First grab the users query, and ask the model to extract the year and company of focus
+    # - Make sure the LLM returns it in an output we can easily extract 
+    # - Run the LLM output through a parser to extract that information
+    # - use the extracted information to perform Retrieval on documents falling under the year and company
+    # - lastly pass the retrieved info to LLM as context along with original query
+    # NOTES:
+    # - Make sure that the information extract components and RAG enhanced queries are two separate conversations
     while(True):
         message = input("User: ")
         print()

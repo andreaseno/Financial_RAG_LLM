@@ -6,34 +6,36 @@ import glob
 import tiktoken
 from transformers import AutoTokenizer, AutoModel
 import torch
+import traceback
+
 
 # Load the tokenizer and the base model (without classification head)
 tokenizer = AutoTokenizer.from_pretrained("yiyanghkust/finbert-tone")
 model = AutoModel.from_pretrained("yiyanghkust/finbert-tone")
 
-def save_embedding_to_db(embedding, chunk):
+def save_embedding_to_db(embedding, chunk, company_name, doc_year, doc_type, fiscal_quarter):
     try:
         # Convert the numpy array to a list
         embedding_list = embedding.tolist()[0]  # Flatten the array
         # Create the SQL insert statement
         insert_query = """
-        INSERT INTO embedding_chunks (embedding)
-        VALUES (%s)
+        INSERT INTO embedding_chunks (embedding, company, year, document_type, fiscal_quarter)
+        VALUES (%s, %s, %s, %s, %s)
         RETURNING id;
         """
 
-        cursor.execute(insert_query, (embedding_list,))
+        cursor.execute(insert_query, (embedding_list, company_name, str(doc_year), doc_type, fiscal_quarter))
         embedding_id = cursor.fetchone()[0]  # Fetch the returned id
         conn.commit()
         
         # Now insert the text into markdown_text with the same id
         insert_text_query = """
-        INSERT INTO text_chunks (id, text)
-        VALUES (%s, %s);
+        INSERT INTO text_chunks (id, text, company, year, document_type, fiscal_quarter)
+        VALUES (%s, %s, %s, %s, %s, %s);
         """
 
         # Execute the query using the retrieved embedding_id
-        cursor.execute(insert_text_query, (embedding_id, chunk))
+        cursor.execute(insert_text_query, (embedding_id, chunk, company_name, str(doc_year), doc_type, fiscal_quarter))
         conn.commit()
     except Exception as error:
         print(f"ERROR committing to the database: {error}")
@@ -50,7 +52,7 @@ def save_embedding_to_db(embedding, chunk):
 #     for i in range(0, len(tokens), max_tokens):
 #         yield tokenizer.decode(tokens[i:i + max_tokens])
 
-def process_markdown_file(file_path):
+def process_markdown_file(file_path, company_name, doc_year, doc_type, fiscal_quarter):
     """Function to process each markdown file."""
     with open(file_path, 'r', encoding='utf-8') as file:
         content = file.read()
@@ -63,20 +65,27 @@ def process_markdown_file(file_path):
                 embedding = generate_embedding(text=summary)
                 # print(f"{i}, ", end="")
                 # Store or process the embedding here
-                save_embedding_to_db(embedding, table)
+                save_embedding_to_db(embedding, table, company_name, doc_year, doc_type, fiscal_quarter)
             elif isinstance(chunk, str):
                 embedding = generate_embedding(text=chunk)
                 # print(f"{i}, ", end="")
                 # Store or process the embedding here
-                save_embedding_to_db(embedding, chunk)
+                save_embedding_to_db(embedding, chunk, company_name, doc_year, doc_type, fiscal_quarter)
         print(end="\n\n")
 
 def read_markdown_files(base_dir):
     """Recursively reads markdown files in all subdirectories."""
     for subdir, dirs, files in os.walk(base_dir):
         for file in glob.glob(os.path.join(subdir, "*.md")):
+            file_parts = file.split('/')
+            company = file_parts[2]
+            year = file_parts[3]
+            name_info = file_parts[5].split('-')
+            doc_type = name_info[0]
+            fiscal_quarter = name_info[1]
             print(f"Reading {file}")
-            process_markdown_file(file)
+            # print(f"company: {company} year: {year} file type: {doc_type}")
+            process_markdown_file(file, company, year, doc_type, fiscal_quarter)
            
 # Define the path to the folder with markdown files
 base_dir = "../md_files"
@@ -107,14 +116,14 @@ try:
     
     # Example query: Create a table
     cursor.execute("""
-        CREATE TABLE IF NOT EXISTS embedding_chunks (id bigserial PRIMARY KEY, embedding vector(768));
+        CREATE TABLE IF NOT EXISTS embedding_chunks (id bigserial PRIMARY KEY, embedding vector(768), company TEXT, year VARCHAR(4), document_type VARCHAR(255), fiscal_quarter VARCHAR(2));
 
     """)
     conn.commit()  # Commit the transaction
     
     # Example query: Create a table
     cursor.execute("""
-        CREATE TABLE IF NOT EXISTS text_chunks (id bigint PRIMARY KEY, text text);
+        CREATE TABLE IF NOT EXISTS text_chunks (id bigint PRIMARY KEY, text TEXT, company TEXT, year VARCHAR(4), document_type VARCHAR(255), fiscal_quarter VARCHAR(2));
 
     """)
     conn.commit()  # Commit the transaction
@@ -125,6 +134,10 @@ try:
     
 
 except Exception as error:
+    tb = traceback.format_exc()
     print(f"Error connecting to the database: {error}")
+    print(tb)
+
+
 
 

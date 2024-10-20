@@ -2,6 +2,7 @@ from transformers import AutoTokenizer
 import ollama
 import re
 from funcs import write_debug_log
+import math
 
 # Initialize the Ollama client
 client = ollama.Client()
@@ -42,60 +43,26 @@ def summarize_table(table, section_buffer):
     response = ollama.chat(model='llama3.2:1b', messages=[{'role': 'user', 'content': message,},])
     return response["message"]["content"]
 
-def process_strings(strings):
+def check_nearest_punctuation(strlist, front = True):
     """
-    For a list of strings, make sure each string contains a full sentence 
-    (move split up sentences to the previous element to prevent splitting sentences across chunks)
+    For a list of strings, return the number of strings before the first occurance of a string containing '.', '!', or '?'
 
     Args:
-        strings list(str): list of strings
+        strlist list(str): list of words to check
+        front bool: flag for whether to check iterating from the start of the end 
 
     Returns:
-        strings list(str): list of strings
+        ret int: number of words before first occurance. Will return None if nothing is found
     """
-    i = 0
-    while i < len(strings):
-        # Remove leading and trailing whitespace from the current string
-        current_string = strings[i].strip()
-        
-        # Check if the current string ends with sentence-ending punctuation
-        if current_string and current_string[-1] in '.!?':
-            # Update the string in the list
-            strings[i] = current_string
-            i += 1  # Move to the next string
-        else:
-            # Initialize index for the next string
-            j = i + 1
-            # Initialize a flag to check if punctuation is found
-            punctuation_found = False
-            
-            # Loop through the following strings to find sentence-ending punctuation
-            while j < len(strings):
-                next_string = strings[j]
-                # Find the position of the first sentence-ending punctuation
-                punctuation_positions = [next_string.find(p) for p in '.!?' if next_string.find(p) != -1]
-                
-                if punctuation_positions:
-                    # Sentence-ending punctuation found
-                    first_punc_pos = min(punctuation_positions) + 1  # Include the punctuation
-                    # Append the text up to the punctuation to the current string
-                    strings[i] = current_string + ' ' + next_string[:first_punc_pos].strip()
-                    # Update the next string by removing the moved text
-                    strings[j] = next_string[first_punc_pos:].lstrip()
-                    punctuation_found = True
-                    break  # Exit the inner loop
-                else:
-                    # No punctuation found, append the entire next string to the current string
-                    current_string += ' ' + next_string.strip()
-                    strings[i] = current_string
-                    # Remove the next string from the list
-                    strings.pop(j)
-                    # Do not increment j since the list has shrunk
-                    continue
-            if not punctuation_found:
-                # No punctuation found in the following strings
-                i += 1  # Move to the next string
-    return strings
+    sentence_endings = {'.', '!', '?'}
+    if front:
+        for i, word in enumerate(strlist):
+            if any(char in sentence_endings for char in word):
+                return i+1
+    else:
+        for i, word in enumerate(reversed(strlist)):
+            if any(char in sentence_endings for char in word):
+                return i        
 
 def split_section(text, num_chunks):
     """
@@ -108,15 +75,97 @@ def split_section(text, num_chunks):
     Returns:
         ret list(str): list of strings
     """
-    n = len(text)
-    part_size = n // num_chunks  # Size of each part
-    remainder = n % num_chunks  # Handle the remainder if string length is not perfectly divisible by x
+    # split into individual words
+    words = text.split(' ')
     
-    parts = [text[i * part_size + min(i, remainder):(i + 1) * part_size + min(i + 1, remainder)] for i in range(num_chunks)]
+    avg_size = len(words) // num_chunks
+    remainder = len(words) % num_chunks  # Calculate the extra elements to distribute
+
+    sublists = []
+    start = 0
+
+    for i in range(num_chunks):
+        # Determine the size of the current sublist
+        sublist_size = avg_size + (1 if i < remainder else 0)
+        sublists.append(words[start:start + sublist_size])
+        start += sublist_size
     
-    ret = process_strings(parts)
-            
+    # Now sublists contains an even split of words. 
+    # try and rejoin sentences together 
+    for i in range(num_chunks-1):
+        ending_words_num = check_nearest_punctuation(sublists[i], front = False)
+        starting_words_num = check_nearest_punctuation(sublists[i+1], front = True)
+        
+        if(ending_words_num and starting_words_num and ending_words_num < starting_words_num):
+            # move the end of list i to start of list i+1
+            elements_to_move = sublists[i][-ending_words_num:]
+            sublists[i] = sublists[i][:-ending_words_num]
+            sublists[i+1] = elements_to_move + sublists[i+1]
+        elif(ending_words_num and starting_words_num and ending_words_num > starting_words_num):
+            elements_to_move = sublists[i+1][:starting_words_num]
+            sublists[i+1] = sublists[i+1][starting_words_num:]
+            sublists[i] = sublists[i] + elements_to_move
+    
+    ret = []
+    for l in sublists:
+        ret.append(" ".join(l))
+
     return ret
+
+def verify_chunks(chunks_list, max_chunk_length):
+    """
+    Take a list of chunks returned by split_section() and verify that they are valid sizes. If they are not, 
+    perform manipulation to make the chunks fit the desired size. 
+
+    Args:
+        chunks_list list(str): list of chunks in string format
+        max_chunk_length int: max length of chunk that can be handled in terms of number of tokens
+        overlap float: float indicating how much of each chunk to overlap
+
+    Returns:
+        chunks_list list(str): list of chunks in string format that have been verified and corrected
+        bool: T/F statement that tells whether the returned chunks_list contains all valid chunks or not
+    """
+    
+    for i in range(len(chunks_list)):
+        check_token_len = num_tokens(chunks_list[i], tokenizer)
+        # If under min token length, grab sentences from neighboring chunks to make chunk larger
+        if(check_token_len < MIN_CHUNK_LEN):
+            # If first chunk, grab sentence from next chunk
+            if(i == 0):
+                sentences = re.split(r'(?<=[.!?])\s+', chunks_list[i+1].strip())
+                # keep grabbing sentences until chunk is long enough
+                for sentence in sentences:
+                    chunks_list[i] += " " + sentence
+                    if (num_tokens(chunks_list[i], tokenizer) > MIN_CHUNK_LEN):
+                        break
+            # If Last chunk, grab from previous chunk
+            elif(i >= len(chunks_list)-1):
+                sentences = re.split(r'(?<=[.!?])\s+', chunks_list[i-1].strip())
+                # keep grabbing sentences until chunk is long enough
+                for sentence in reversed(sentences):
+                    chunks_list[i] = sentence + " " + chunks_list[i]
+                    if (num_tokens(chunks_list[i], tokenizer) > MIN_CHUNK_LEN):
+                        break
+            # If chunk in the middle, take shortest sentence from either neighboring chunk
+            else:  
+                before_sentences = re.split(r'(?<=[.!?])\s+', chunks_list[i-1].strip())
+                after_sentences = re.split(r'(?<=[.!?])\s+', chunks_list[i+1].strip())
+                while(len(before_sentences) > 0 and len(after_sentences) > 0):
+                    if(len(before_sentences[-1]) > len(after_sentences[0])):
+                        chunks_list[i] += " " + after_sentences[0]
+                        after_sentences.pop(0)
+                        if (num_tokens(chunks_list[i], tokenizer) > MIN_CHUNK_LEN):
+                            break
+                    else:
+                        chunks_list[i] = before_sentences[-1] + " " + chunks_list[i]
+                        before_sentences.pop(-1)
+                        if (num_tokens(chunks_list[i], tokenizer) > MIN_CHUNK_LEN):
+                            break
+        # If chunk is too large, set flag so that c+1 chunking can happen
+        if(check_token_len > max_chunk_length ):
+            return chunks_list, False
+    return chunks_list, True
 
 def chunk_section(section_buffer, max_chunk_length, overlap=0.2):
     """
@@ -132,17 +181,29 @@ def chunk_section(section_buffer, max_chunk_length, overlap=0.2):
     """
     # TODO: implement overlap
     text = " ".join(section_buffer)
-    if (num_tokens(text, tokenizer) > max_chunk_length):
-        correct_chunking = False
-        num_chunks = 2
-        while not correct_chunking:
-            # Initialize list to hold the chunks
-            ret_chunks = split_section(text, num_chunks)
-            num_chunks += 1
-            correct_chunking = True
-            for c in ret_chunks:
-                if num_tokens(c, tokenizer) > max_chunk_length:
-                    correct_chunking = False
+    token_len = num_tokens(text, tokenizer)
+    if (token_len > max_chunk_length):
+        
+        correct_chunking = True
+
+        # calculate how many chunks are needed
+        c = math.ceil(token_len / max_chunk_length)
+        # try to chunk for c chunks
+        ret_chunks = split_section(text, c)
+        
+        ret_chunks, correct_chunking = verify_chunks(ret_chunks, max_chunk_length)
+        
+        if(not correct_chunking):
+            # increment chunks by 1
+            c = c + 1
+            # try to chunk for c chunks
+            ret_chunks = split_section(text, c)
+            
+            ret_chunks, correct_chunking = verify_chunks(ret_chunks, max_chunk_length)
+            if(not correct_chunking):
+                print("Need to implement a third case to split sentences so chunks dont overflow")
+                raise
+        
         return ret_chunks
             
     else:
@@ -204,6 +265,7 @@ def get_next_line(lines):
     line = next(lines, None)
     while ((not line == None) and (is_ignored_line(line))):
         line = next(lines, None)
+        # print("meow2")
     return line
     
 def handle_table(lines, first_line):
@@ -286,32 +348,44 @@ def chunk_markdown(md_text, max_chunk_length, verbose=False):
             continue
         # Check if new section has started
         if is_section_header(line):
-            # Check section length to prevent small chunk sizes
-            while ((not line == None) and (num_tokens(" ".join(section_buffer), tokenizer) < MIN_CHUNK_LEN)):
-                # If so, add the next section
-                next_section_buffer = []
-                add_line(next_section_buffer, line)
-                line = get_next_line(lines)
-                while ((not line == None) and (not is_section_header(line))):
-                    if is_table(line):
-                        table_chunk, line = handle_table(lines, line)
-                        chunks.append((table_chunk, summarize_table(table_chunk, section_buffer)))
-                    else:
-                        add_line(next_section_buffer, line)
-                        line = get_next_line(lines)
-                section_buffer.extend(next_section_buffer)
-            section_chunks = chunk_section(section_buffer, max_chunk_length)
-            chunks.extend(section_chunks)
-            section_buffer = []
-            add_line(section_buffer, line)
-        # if not continue adding to section buffer
-        else:
-            if is_table(line):
-                table_chunk, line = handle_table(lines, line)
-                chunks.append((table_chunk, summarize_table(table_chunk, section_buffer)))
-            else:
-                # Add to the current paragraph buffer
+            # TODO: Check whether section buffer contains any lines other than header lines to prevent header->table->header edge case
+            all_section_header = True
+            for added_line in section_buffer:
+                if (not is_section_header(added_line)):
+                    all_section_header = False
+                    break
+            if (all_section_header):
+                section_buffer = []
                 add_line(section_buffer, line)
+                continue
+                
+            # Check section length to prevent small chunk sizes
+            if(num_tokens(" ".join(section_buffer), tokenizer) < MIN_CHUNK_LEN):
+                # If so, continue parsing to add the next section
+                add_line(section_buffer, line)
+                continue
+            # Check section length to prevent large chunk sizes
+            elif(num_tokens(" ".join(section_buffer), tokenizer) > max_chunk_length):
+                # if so break into smaller chunks
+                # TODO: Rewrite chunk_section
+                chunks.extend(chunk_section(section_buffer, max_chunk_length))
+                section_buffer = []
+                add_line(section_buffer, line)
+            # If section length is in between min and max length, add to chunks and continue
+            else: 
+                chunks.extend(chunk_section(section_buffer, max_chunk_length))
+                section_buffer = []
+                add_line(section_buffer, line)
+            
+         # if not check if line is a table
+        elif is_table(line):
+            # TODO: Rewrite hangle_table to not use while loop
+            table_chunk, line = handle_table(lines, line)
+            chunks.append((table_chunk, summarize_table(table_chunk, section_buffer)))
+        # Otherwise, line must be a normal text line, so add it to the section bufer
+        else:
+            # Add to the current paragraph buffer
+            add_line(section_buffer, line)
 
     # Final flush for any remaining paragraph
     if section_buffer:
@@ -325,13 +399,13 @@ def chunk_markdown(md_text, max_chunk_length, verbose=False):
 # WILL OUTPUT A SINGLE CHUNKED DOCUMENT TO output.md
 
 # Define the path to the folder with markdown files
-# path = "/Users/oga/Desktop/gwu_stuff/Masters Stuff/LLM Research/md_files/Tesla/2024/10Q_10K/10Q-Q2-2024.pdf.md"
-# with open(path, 'r', encoding='utf-8') as file:
-#     content = file.read()
-# markdown_text = content
-# chunks = chunk_markdown(markdown_text, max_chunk_length=MAX_CHUNK_LEN, verbose=True)
-# # for i, chunk in enumerate(chunks):
-# #     print(f"Chunk {i + 1}:\n{chunk}\n")
-# with open("output.md", "w") as f:
-#     for chunk in chunks:
-#         f.write(str(chunk) + "\n-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-\n")  # Separator between chunks
+path = "/Users/oga/Desktop/gwu_stuff/Masters Stuff/LLM Research/md_files/Tesla/2024/10Q_10K/10Q-Q2-2024.pdf.md"
+with open(path, 'r', encoding='utf-8') as file:
+    content = file.read()
+markdown_text = content
+chunks = chunk_markdown(markdown_text, max_chunk_length=MAX_CHUNK_LEN, verbose=True)
+# for i, chunk in enumerate(chunks):
+#     print(f"Chunk {i + 1}:\n{chunk}\n")
+with open("output.md", "w") as f:
+    for chunk in chunks:
+        f.write(str(chunk) + "\n-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-\n")  # Separator between chunks
