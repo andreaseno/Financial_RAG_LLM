@@ -2,6 +2,11 @@
 
 md_files
 
+img
+
 pdf_files
 
 .DS_Store
+*.txt
+
+*/__pycache__/
