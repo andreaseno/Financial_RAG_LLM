@@ -1,6 +1,10 @@
 import ollama
 import json
 import psycopg2
+import ast
+import re
+from pgvector_db_funcs import retrieve_n
+
 
 # set globals
 debug = False
@@ -114,9 +118,77 @@ try:
             conn.close()
             break
         
+        # Define the prompt to use when extracting out the information from the user query
+        extraction_prompt = f"""
+        I am going to give you a users query that they are prompting to a financial chatbot. Take that query, and extract out the company
+        or companies, and year or years that relate to the user's query. Then provide that information in two python lists in your response.
+        
+        Below is two examples of what your response should look like given an query.
+        
+        ### Example Query 1
+        
+        Query Structure:
+        ```
+        **Query**: <query>
+                    What is Apple's earnings in 2024?
+                    </query>
+        ```
+        
+        Your Response:
+        ```
+        **Companies** = ['Apple']
+        **Years** = [2024]
+        ```
+        
+        ### Example Query 2
+        
+        Query Structure:
+        ```
+        **Query**: <query>
+                    Compare the average revenue of Tesla to Microsoft over the years 2022-2024
+                    </query>
+        ```
+        
+        Your Response:
+        ```
+        **Companies** = ["Tesla", "Microsoft"]
+        **Years** = [2022, 2023, 2024]
+        ```
+        
+        Here is the real user query I would like for you to handle as described above:
+        
+        **Query**: <query>
+                    {message}
+                    </query>
+        """
+        
+        # get response from Ollama
+        extraction = ollama.generate(model='llama3.1', prompt=extraction_prompt)
+        
+        # Use regulkar expression and the ast library to get the information and turn it into lists
+        companies_match = re.search(r"\*\*Companies\*\*\s*=\s*(\[.*?\])", extraction['response'])
+        years_match = re.search(r"\*\*Years\*\*\s*=\s*(\[.*?\])", extraction['response'])
+        # print(companies_match)
+        # print(years_match)
+        companies_list = ast.literal_eval(companies_match.group(1)) if companies_match else []
+        years_list = ast.literal_eval(years_match.group(1)) if years_match else []
+        print(companies_list)
+        print(years_list)
+        
+        # Perform Retrieval and get top n chunks
+        n = 3
+        top_n = retrieve_n(message, n, companies_list, years_list)
+        
+        print(top_n)
+        # Build context
+        context = ""
+        for i, doc in enumerate(top_n):
+            context += f"Document {i}: {doc}\n"
+        
+        
         injected_query = f'''
                         **Context**: <context>
-                                    {md_content}
+                                    {context}
                                     <context>
                         **Query**: <query>
                                     {message}
