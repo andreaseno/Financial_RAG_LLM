@@ -1,0 +1,73 @@
+[
+    {
+        "query": "What was Apple's revenue in Q3 of 2024?",
+        "ground_truth": [
+            {
+                "label_id": "chunk_001",
+                "text": "|                                      | June 29, 2024      | July 1, 2023 | June 29, 2024    | July 1, 2023 |\n| Net sales:                           |                     |         |                   |         |\n| Products                             | $      61,564      | $  60,584 | $     224,908    | $ 230,901 |\n| Services                             | $      24,213      | $  21,213 | $      71,197    | $  62,886 |\n| **Total net sales**                 | **$      85,777**  | **$  81,797** | **$     296,105** | **$ 293,787** |"
+            }
+        ]
+    },
+    {
+        "query": "What was Tesla's revenue in Q4 of 2023?",
+        "ground_truth": [
+            {
+                "label_id": "chunk_001",
+                "text": "| Services and other                                                          | 2,166       | 1,645       | 6,153       | 4,390       |\n| **Total revenues**                                                          | **23,350**  | **21,454**  | **71,606**  | **57,144**  |"
+            }
+        ]
+    },
+    {
+        "query": "What was Apple's earnings per share in Q3 of 2024?",
+        "ground_truth": [
+            {
+                "label_id": "chunk_001",
+                "text": "| Basic                                | $          1.40     | $         1.27    |\n| Diluted                              | $          1.40     | $         1.26    |"
+            },
+            {
+                "label_id": "chunk_002",
+                "text": "| Basic                                | 15,287,521         | 15,697,614        |\n| Diluted                              | 15,348,175         | 15,775,021        |"
+            }
+        ]
+    },
+    {
+        "query": "What was Apple's debt in Q3 of 2024?",
+        "ground_truth": [
+            {
+                "label_id": "chunk_001",
+                "text": "| Commercial paper                              | $       2,994  | $           5,985   |\n| Term debt                                    | $      12,114  | $           9,822   |\n| **Total current liabilities**                 | **$  131,624** | **$      145,308**  |"
+            }
+        ]
+    },
+    {
+        "query": "What was Apple's earnings per share in Q3 of 2024?",
+        "ground_truth": [
+            {
+                "label_id": "chunk_001",
+                "text": "| Basic                                | $          1.40     | $         1.27    |\n| Diluted                              | $          1.40     | $         1.26    |"
+            },
+            {
+                "label_id": "chunk_002",
+                "text": "| Basic                                | 15,287,521         | 15,697,614        |\n| Diluted                              | 15,348,175         | 15,775,021        |"
+            }
+        ]
+    },
+    {
+        "query": "What was Apple's debt in Q3 of 2024?",
+        "ground_truth": [
+            {
+                "label_id": "chunk_001",
+                "text": "| Commercial paper                              | $       2,994  | $           5,985   |\n| Term debt                                    | $      12,114  | $           9,822   |\n| **Total current liabilities**                 | **$  131,624** | **$      145,308**  |"
+            },
+            {
+                "label_id":"chunk_002",
+                "text":"| Term debt                                    | $      86,196  | $          95,281   |\n| Other non-current liabilities                  | $      47,084  | $          49,848   |\n| **Total non-current liabilities**             | **$  133,280** | **$      145,129**  |\n| **Total liabilities**                         | **$  264,904** | **$      290,437**  |"
+            },
+            {
+                "label_id":"chunk_003",
+                "text":"As of June 29, 2024 and September 30, 2023, the Company had outstanding fixed-rate notes with varying maturities for an aggregate carrying amount of $98.3 billion and $105.1 billion"
+            }
+        ]
+    }
+    
+  ]

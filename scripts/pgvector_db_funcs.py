@@ -30,7 +30,7 @@ def retrieve_n(query = "", n = 5, company_filter = [], year_filter = [], verbose
             user=user,
             password=password
         )
-        print("Connection established successfully!")
+        # print("Connection established successfully!")
 
         # Create a cursor to perform database operations
         cursor = conn.cursor()
