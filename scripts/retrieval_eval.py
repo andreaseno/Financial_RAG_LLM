@@ -1,6 +1,6 @@
 import json
 import psycopg2
-from llm import run_llm
+from llm import retrieval_step
 
 # Global Variables
 debug = True
@@ -24,7 +24,8 @@ try:
         query = entry['query']
         if debug: print(f"Query: {query}")
         # Grab the top n chunks using the same RAG algorithm used in main.py
-        top_n_chunks = run_llm(eval = True, n = 50, eval_query = query)
+        # top_n_chunks = run_llm(eval = True, n = 50, eval_query = query)
+        top_n_chunks = retrieval_step(message = query, n = 50)
         # if debug: print(top_n_chunks)
         
         true_positives = 0
@@ -51,6 +52,3 @@ except FileNotFoundError:
     print(f"Error: File '{file_path}' not found.")
 except json.JSONDecodeError:
     print(f"Error: Could not decode the JSON in file '{file_path}'.")
-
-
-# run_llm(eval = True, n = 5, eval_query = "test")
