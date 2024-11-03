@@ -69,7 +69,7 @@ def retrieve_n(query = "", n = 5, company_filter = [], year_filter = [], quarter
 
         database_query += f"ORDER BY embedding <=> '{embedding_string}' LIMIT {n};"
 
-        print(database_query)
+        if verbose: print(database_query)
         # Query data from the table
         cursor.execute(database_query)
         rows = cursor.fetchall()

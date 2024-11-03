@@ -1,5 +1,7 @@
 import yfinance as yf
 from datetime import datetime
+from llm import retrieval_step, generation_step
+import re
 
 # I want to use stock performance to generate baseline performance labels for periods of time, 
 # and then ask the LLM "how did {insert company} perform during the period {insert time period}" 
@@ -60,15 +62,52 @@ def get_company_performance(ticker, start_date, end_date, verbose = False):
 
 if __name__ == "__main__":
     # ticker_symbol = input("Enter the stock ticker symbol (e.g., AAPL, TSLA): ")
-    tickers = ['tsla','aapl','nvda','msft','meta','NVCR','AMC','HE']
+    companies = [
+                {
+                    'name':'Tesla',
+                    'ticker':'tsla'
+                },
+                {
+                   'name':'Apple',
+                   'ticker':'aapl'
+                }
+            ]
     years = [2023, 2024]
     try:
-        for ticker in tickers:
+        for company in companies:
             for year in years:
                 end_date = datetime(year, 12, 31, 16, 00)
                 start_date = datetime(year, 1, 1, 9, 30)
-                performance = get_company_performance(ticker, start_date, end_date, verbose=True)
+                performance = get_company_performance(company['ticker'], start_date, end_date, verbose=False)
                 # print(f"the returned value was {performance}\n")
+                
+                query = f"Did {company['name']} perform well in {year}?"
+                top_n = retrieval_step(message = query, n = 5)
+                
+                query += """
+                
+                Please provide your yes/no answer as a boolean value in the same format as the <example> below and do not include any other information except what is seen in the <example>:
+                
+                <example>
+                **answer** = true
+                </example>
+                """
+                
+                answer = generation_step(message = query, top_n = top_n, eval = True)
+                
+                match = re.search(r"\*\*answer\*\*\s*=\s*(true|false)", answer)
+
+                
+                if match:
+                    print(answer)
+                    value = match.group(1).lower() == 'true'  # This will give you 'true' or 'false'
+                    print(value)
+                    print(type(value))
+
+                
+
+                
+                
                 
     except Exception as e:
         print(f"An error occurred: {e}")

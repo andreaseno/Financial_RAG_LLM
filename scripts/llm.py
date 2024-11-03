@@ -15,6 +15,25 @@ password = "adminpass"   # Password you provided during setup
 # Initialize the Ollama client
 client = ollama.Client()
 
+system_prompt = """You are an AI assistant tasked with answering financial questions. Your task is to answer simple questions about a company based on the <context> element of the query.
+    Here is an example query in the same format queries will be asked
+    
+    ```
+    **Context**: <context>
+                ...
+                <context>
+    **Query**: <query>
+                ...
+                </query>
+    ```
+    
+    When the user asks a question about a company, use information from the <context> element to answer the question asked in <query>.
+    
+    
+    
+    
+"""
+
 def retrieval_step(message = "", n = 5, debug = False):
     """Function to perform the retrieval step of the RAG pipeline. 
 
@@ -107,7 +126,7 @@ def retrieval_step(message = "", n = 5, debug = False):
     # Perform Retrieval and get top n chunks
     return retrieve_n(message, n, companies_list, years_list, quarters_list)
 
-def generation_step(message = "", top_n = None, conversation = None, debug = False):
+def generation_step(message = "", top_n = None, conversation = None, eval = False, debug = False):
     """Function to perform the generation step of the RAG pipeline. 
 
     Args:
@@ -119,6 +138,12 @@ def generation_step(message = "", top_n = None, conversation = None, debug = Fal
     Returns:
         None
     """
+    
+    if (not conversation):
+        conversation = [
+            {"role": "system", "content": system_prompt},
+        ]
+    
     # Build context
     context = ""
     for i, doc in enumerate(top_n):
@@ -138,14 +163,18 @@ def generation_step(message = "", top_n = None, conversation = None, debug = Fal
     conversation.append({"role": "user", "content": injected_query})
 
     # Send the chat to the model with streaming enabled
-    response_stream = client.chat(model='llama3.1', messages=conversation, stream=True)
-    print("System: ", end='')
-    # Print each chunk of content as it is received
-    for chunk in response_stream:
-        content = chunk.get('message', {}).get('content', '')
-        print(content, end='')
-    # Ensure the print ends with a new line
-    print("\n")
+    if eval:
+        response = client.chat(model='llama3.1', messages=conversation, stream=False)
+        return response.get('message', None).get('content', None)
+    else:
+        response_stream = client.chat(model='llama3.1', messages=conversation, stream=True)
+        print("System: ", end='')
+        # Print each chunk of content as it is received
+        for chunk in response_stream:
+            content = chunk.get('message', {}).get('content', '')
+            print(content, end='')
+        # Ensure the print ends with a new line
+        print("\n")
 
 def run_llm(n = 5, debug = False):
     """Function to combine the retrieval and generation steps into one function. Does so in a way that presents an interactable CLI
@@ -176,25 +205,6 @@ def run_llm(n = 5, debug = False):
         # Welcome user
         print("System: Welcome to my Financial LLM. Please ask a Question:")
         print()
-        
-        system_prompt = f"""You are an AI assistant tasked with answering financial questions. Your task is to answer simple questions about a company based on the <context> element of the query.
-                            Here is an example query in the same format queries will be asked
-                            
-                            ```
-                            **Context**: <context>
-                                        ...
-                                        <context>
-                            **Query**: <query>
-                                        ...
-                                        </query>
-                            ```
-                            
-                            When the user asks a question about a company, use information from the <context> element to answer the question asked in <query>.
-                            
-                            
-                            
-                            
-                        """
 
         # Define conversation
         conversation = [
