@@ -60,25 +60,16 @@ def get_company_performance(ticker, start_date, end_date, verbose = False):
     
     return evaluate_performance(percentage_change, volatility, average_volume)
 
-if __name__ == "__main__":
-    # ticker_symbol = input("Enter the stock ticker symbol (e.g., AAPL, TSLA): ")
-    companies = [
-                {
-                    'name':'Tesla',
-                    'ticker':'tsla'
-                },
-                {
-                   'name':'Apple',
-                   'ticker':'aapl'
-                }
-            ]
-    years = [2023, 2024]
+def generation_eval(companies, years, verbose = False):
     try:
+        count_correct = 0
+        count_total = 0
+        
         for company in companies:
             for year in years:
                 end_date = datetime(year, 12, 31, 16, 00)
                 start_date = datetime(year, 1, 1, 9, 30)
-                performance = get_company_performance(company['ticker'], start_date, end_date, verbose=False)
+                performance = get_company_performance(company['ticker'], start_date, end_date, verbose = verbose)
                 # print(f"the returned value was {performance}\n")
                 
                 query = f"Did {company['name']} perform well in {year}?"
@@ -99,10 +90,25 @@ if __name__ == "__main__":
 
                 
                 if match:
-                    print(answer)
                     value = match.group(1).lower() == 'true'  # This will give you 'true' or 'false'
-                    print(value)
-                    print(type(value))
+                    if verbose:
+                        print(answer)
+                        print(value)
+                    
+                else:
+                    print(f'ERROR WITH REGULAR EXPRESSION MATCHING ON RETURNED ANSWER: {answer}')
+                
+                
+                if performance == value:
+                    count_correct += 1
+                    print("success")
+                else:
+                    print("failure")
+                count_total += 1
+        print(f"total correct = {count_correct}")
+        print(f"total correct percentage = {count_correct/count_total}")
+                    
+                
 
                 
 
@@ -111,3 +117,20 @@ if __name__ == "__main__":
                 
     except Exception as e:
         print(f"An error occurred: {e}")
+
+if __name__ == "__main__":
+    # ticker_symbol = input("Enter the stock ticker symbol (e.g., AAPL, TSLA): ")
+    companies = [
+                {
+                    'name':'Tesla',
+                    'ticker':'tsla'
+                },
+                {
+                   'name':'Apple',
+                   'ticker':'aapl'
+                }
+            ]
+    years = [2023, 2024]
+    
+    generation_eval(companies, years)
+    

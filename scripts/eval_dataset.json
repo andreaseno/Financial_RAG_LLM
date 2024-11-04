@@ -5,6 +5,10 @@
             {
                 "label_id": "chunk_001",
                 "text": "|                                      | June 29, 2024      | July 1, 2023 | June 29, 2024    | July 1, 2023 |\n| Net sales:                           |                     |         |                   |         |\n| Products                             | $      61,564      | $  60,584 | $     224,908    | $ 230,901 |\n| Services                             | $      24,213      | $  21,213 | $      71,197    | $  62,886 |\n| **Total net sales**                 | **$      85,777**  | **$  81,797** | **$     296,105** | **$ 293,787** |"
+            },
+            {
+                "label_id": "chunk_002",
+                "text": "| Product/Service                          | Three Months Ended |         | Nine Months Ended |         |\n|------------------------------------------|---------------------|---------|--------------------|---------|\n|                                          | June 29, 2024      | July 1, 2023 | June 29, 2024      | July 1, 2023 |\n|"
             }
         ]
     },
@@ -14,6 +18,18 @@
             {
                 "label_id": "chunk_001",
                 "text": "| Services and other                                                          | 2,166       | 1,645       | 6,153       | 4,390       |\n| **Total revenues**                                                          | **23,350**  | **21,454**  | **71,606**  | **57,144**  |"
+            },
+            {
+                "label_id": "chunk_002",
+                "text": "| Energy generation and storage leasing           | $143         | $151         | $409         | $413         |\n| **Total revenues**                             | **$23,350**  | **$21,454**  | **$71,606**  | **$57,144**  |"
+            },
+            {
+                "label_id": "chunk_003",
+                "text": "| Other international                 | $           7,437 | $           6,087 | $          22,492 | $          14,992 |\n| **Total**                           | **$          23,350** | **$          21,454** | **$          71,606** | **$          57,144** |"
+            },
+            {
+                "label_id": "chunk_004",
+                "text": "| Energy generation and storage segment revenue         | $ 1,559         | $ 1,117    | $ 442  | 40% | $ 4,597         | $ 2,599    | $ 1,998 | 77%  |\n| **Total revenues**                                   | **$ 23,350**    | **$ 21,454**| **$ 1,896** | **9%** | **$ 71,606**    | **$ 57,144**| **$ 14,462** | **25%** |"
             }
         ]
     },
@@ -27,29 +43,12 @@
             {
                 "label_id": "chunk_002",
                 "text": "| Basic                                | 15,287,521         | 15,697,614        |\n| Diluted                              | 15,348,175         | 15,775,021        |"
-            }
-        ]
-    },
-    {
-        "query": "What was Apple's debt in Q3 of 2024?",
-        "ground_truth": [
-            {
-                "label_id": "chunk_001",
-                "text": "| Commercial paper                              | $       2,994  | $           5,985   |\n| Term debt                                    | $      12,114  | $           9,822   |\n| **Total current liabilities**                 | **$  131,624** | **$      145,308**  |"
-            }
-        ]
-    },
-    {
-        "query": "What was Apple's earnings per share in Q3 of 2024?",
-        "ground_truth": [
-            {
-                "label_id": "chunk_001",
-                "text": "| Basic                                | $          1.40     | $         1.27    |\n| Diluted                              | $          1.40     | $         1.26    |"
             },
             {
-                "label_id": "chunk_002",
-                "text": "| Basic                                | 15,287,521         | 15,697,614        |\n| Diluted                              | 15,348,175         | 15,775,021        |"
+                "label_id": "chunk_003",
+                "text": "**Basic earnings per share** | $        1.40 | $    1.27 | $        5.13 | $    4.69 |"
             }
+            
         ]
     },
     {
@@ -65,8 +64,34 @@
             },
             {
                 "label_id":"chunk_003",
-                "text":"As of June 29, 2024 and September 30, 2023, the Company had outstanding fixed-rate notes with varying maturities for an aggregate carrying amount of $98.3 billion and $105.1 billion"
+                "text":"had outstanding fixed-rate notes with varying maturities for an aggregate carrying amount of $98.3 billion and $105.1 billion, respectively"
+            },
+            {
+                "label_id":"chunk_004",
+                "text":"|Contractual Maturity|Fair Value (in millions)|\n|---|---|\n|Due after 1 year through 5 years|$64,209|"
+            },
+            {
+                "label_id":"chunk_005",
+                "text":"| Maturities 90 days or less:                     | June 29, 2024 | July 1, 2023 |\n|-------------------------------------------------|----------------|---------------|\n| Repayments of commercial paper, net              | $      (2,985) | $      (3,326)|"
             }
+        ]
+    },
+    {
+        "query": "What was Tesla's earnings per share in Q2 of 2023?",
+        "ground_truth": [
+            {
+                "label_id": "chunk_001",
+                "text": "|Net income per share of common stock attributable to common stockholders| | |\n|Basic|$0.80|$1.07|\n|Diluted|$0.73|$0.95|\n|Weighted average shares used in computing net income per share of common stock| | |\n|Basic|3,166|3,103|\n|Diluted|3,468|3,472|"
+            },
+            {
+                "label_id": "chunk_002",
+                "text": "| |Three Months Ended March 31, 2023|Three Months Ended March 31, 2022|\n|---|---|---|\n|Net income attributable to common stockholders|$2,513|$3,318|"
+            },
+            {
+                "label_id": "chunk_003",
+                "text": "|Weighted average shares used in computing net income per share of common stock, basic|3,166|3,103|"
+            }
+            
         ]
     }
     
