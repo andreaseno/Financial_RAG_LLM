@@ -1,6 +1,8 @@
 [
     {
         "query": "What was Apple's revenue in Q3 of 2024?",
+        "companies": ["Apple"],
+        "keywords": ["revenue"],
         "ground_truth": [
             {
                 "label_id": "chunk_001",
@@ -13,7 +15,9 @@
         ]
     },
     {
-        "query": "What was Tesla's revenue in Q4 of 2023?",
+        "query": "What was Tesla's revenue in Q3 of 2023?",
+        "companies": ["Tesla"],
+        "keywords": ["revenue"],
         "ground_truth": [
             {
                 "label_id": "chunk_001",
@@ -34,7 +38,167 @@
         ]
     },
     {
-        "query": "What was Apple's earnings per share in Q3 of 2024?",
+        "query": "What was Nvidia's revenue in Q3 of 2022?",
+        "companies": ["Nvidia"],
+        "keywords": ["revenue"],
+        "ground_truth": [
+            {
+                "label_id": "chunk_001",
+                "text": "United States             | $              2,148| $              1,126| $               6,069| $              2,890|"
+            },
+            {
+                "label_id": "chunk_002",
+                "text": "Data Center               | $              3,833| $              2,936| $             11,389| $              7,350|"
+            },
+            {
+                "label_id": "chunk_003",
+                "text": "Total                  | $ 5,931            | $ 7,103        | $(1,172)          | (17)%          |"
+            },
+            {
+                "label_id": "chunk_004",
+                "text": "Revenue                           | $             5,931 | $             7,103 | $          20,923 | $          19,271 |"
+            }
+        ]
+    },
+    {
+        "query": "What was Microsoft's revenue in Q3 of 2022?",
+        "companies": ["Microsoft"],
+        "keywords": ["revenue"],
+        "ground_truth": [
+            {
+                "label_id": "chunk_001",
+                "text": "**Total revenue**                    | **$ 49,360** | **$ 41,706** | **$ 146,405**| **$ 121,936**"
+            },
+            {
+                "label_id": "chunk_002",
+                "text": "| More Personal Computing                      | $14,520              | $13,036              | $45,299              | $40,007              |\n| **Total**                                    | **$49,360**          | **$41,706**          | **$146,405** "
+            },
+            {
+                "label_id": "chunk_003",
+                "text": "| Other countries                              | $24,589              | $21,333              | $72,341              | $60,702              |\n| **Total**                                    | **$49,360**          | **$41,706**          | **$146,405**         | **$121,936**         |"
+            },
+            {
+                "label_id": "chunk_004",
+                "text": "| Other                                        | $1,304      | $1,125      | $3,888      | $3,300      |\n| **Total**                                    | **$49,360** | **$41,706** | **$146,405** | **$121,936** |"
+            },
+            {
+                "label_id": "chunk_005",
+                "text": "| Revenue                                   | $49,360 million              | $41,706 million   | $146,405 million            | $121,936 million  |\n| Gross margin                              | $33,745 million"
+            },
+            {
+                "label_id": "chunk_006",
+                "text": "| More Personal Computing          | $ 14,520    | $ 13,036    | 11%                   | $ 45,299    | $ 40,007    | 13%           |\n| **Total**                        | **$ 49,360**| **$ 41,706**|"
+            }
+        ]
+    },
+    {
+        "query": "What was Meta's revenue in Q2 of 2023?",
+        "companies": ["Meta"],
+        "keywords": ["revenue"],
+        "ground_truth": [
+            {
+                "label_id": "chunk_001",
+                "text": "| Revenue                                     | $31,999 million             | $28,822 million | 11%      |"
+            },
+            {
+                "label_id": "chunk_002",
+                "text": "| Revenue                                                                     | $31,999                     | $28,822 | $60,645                 | $56,729 |"
+            },
+            {
+                "label_id": "chunk_003",
+                "text": "| **Total revenue**                            | **$31,999**                  | **$28,822** | **$60,645**              | **$56,729** |"
+            },
+            {
+                "label_id": "chunk_004",
+                "text": "| GAAP revenue                                                                | $31,999     | $28,822     | $60,645     | $56,729     |"
+            },
+            {
+                "label_id": "chunk_005",
+                "text": "**Revenue**: Revenue was $32.0 billion, an increase of 11% year-over-year, a"
+            }
+        ]
+    },
+    {
+        "query": "What was Google's revenue in Q3 of 2024?",
+        "companies": ["Google"],
+        "keywords": ["revenue"],
+        "ground_truth": [
+            {
+                "label_id": "chunk_001",
+                "text": "| **Total revenues**                        | **$ 76,693**        | **$ 88,268**| **$ 221,084**  | **$ 253,549**|"
+            },
+            {
+                "label_id": "chunk_002",
+                "text": "| **Total revenues** | **$ 76,693**        | 100 %   | **$ 221,084**     | 100 %   |"
+            },
+            {
+                "label_id": "chunk_003",
+                "text": "| **Total revenues**                    | **$ 76,693**| **$ 88,268** | **$ 221,084**| **$ 253,549** |"
+            },
+            {
+                "label_id": "chunk_004",
+                "text": "| Total amounts included in the Consolidated Statements of Income            | $76,693                           | $(146)  | $88,268 |"
+            },
+            {
+                "label_id": "chunk_005",
+                "text": "| **Total revenues**  | **$76,693** | **$88,268** | **$221,084** | **$253,549** |"
+            },
+            {
+                "label_id": "chunk_006",
+                "text": "| Consolidated revenues                                         |                                   | $76,693      | $88,268      | $11,575     | 15 %     |"
+            },
+            {
+                "label_id": "chunk_007",
+                "text": "| **Total revenues**                    | **$ 76,693**| **$ 88,268** | **$ 221,084**| **$ 253,549** |"
+            },
+            {
+                "label_id": "chunk_008",
+                "text": "| **Total revenues**   | $    76,693                            | $    88,268                            |                | $    89,268               | 15 %                       | 0 %                  | 16 %                      |"
+            }
+        ]
+    },
+    {
+        "query": "What was Berkshire Hathaway's revenue in Q1 of 2022?",
+        "companies": ["Berkshire Hathaway"],
+        "keywords": ["revenue"],
+        "ground_truth": [
+            {
+                "label_id": "chunk_001",
+                "text": "| **Total revenues**                                                      | $          70,810   | $          64,599   |"
+            },
+            {
+                "label_id": "chunk_002",
+                "text": "| **Total Revenues**                       | **$ 18,385** | **12,514** | **9,091** | **5,944** | **5,978** | **18,898** | **$ 70,810** |"
+            },
+            {
+                "label_id": "chunk_003",
+                "text": "| **Total Consolidated Revenues**                                        | **$       70,810**  | **$       64,599**  |"
+            }
+        ]
+    },
+    {
+        "query": "What was Amazon's revenue in Q2 of 2023?",
+        "companies": ["Amazon"],
+        "keywords": ["revenue"],
+        "ground_truth": [
+            {
+                "label_id": "chunk_001",
+                "text": "| Revenues                     | $95                                | $661                               |"
+            },
+            {
+                "label_id": "chunk_002",
+                "text": "| Interest income            | $159M   | $661M   | $267M                           | $1.3B                           |"
+            },
+            {
+                "label_id": "chunk_003",
+                "text": "| Interest income                                                             | $             159    | $661    | $         267    | $1,272  |"
+            }
+        ]
+    },
+    {
+        "query": "What was Apple's earnings per share (EPS) in Q3 of 2024?",
+        "companies": ["Apple"],
+        "keywords": ["earnings per share (EPS)"],
         "ground_truth": [
             {
                 "label_id": "chunk_001",
@@ -52,32 +216,9 @@
         ]
     },
     {
-        "query": "What was Apple's debt in Q3 of 2024?",
-        "ground_truth": [
-            {
-                "label_id": "chunk_001",
-                "text": "| Commercial paper                              | $       2,994  | $           5,985   |\n| Term debt                                    | $      12,114  | $           9,822   |\n| **Total current liabilities**                 | **$  131,624** | **$      145,308**  |"
-            },
-            {
-                "label_id":"chunk_002",
-                "text":"| Term debt                                    | $      86,196  | $          95,281   |\n| Other non-current liabilities                  | $      47,084  | $          49,848   |\n| **Total non-current liabilities**             | **$  133,280** | **$      145,129**  |\n| **Total liabilities**                         | **$  264,904** | **$      290,437**  |"
-            },
-            {
-                "label_id":"chunk_003",
-                "text":"had outstanding fixed-rate notes with varying maturities for an aggregate carrying amount of $98.3 billion and $105.1 billion, respectively"
-            },
-            {
-                "label_id":"chunk_004",
-                "text":"|Contractual Maturity|Fair Value (in millions)|\n|---|---|\n|Due after 1 year through 5 years|$64,209|"
-            },
-            {
-                "label_id":"chunk_005",
-                "text":"| Maturities 90 days or less:                     | June 29, 2024 | July 1, 2023 |\n|-------------------------------------------------|----------------|---------------|\n| Repayments of commercial paper, net              | $      (2,985) | $      (3,326)|"
-            }
-        ]
-    },
-    {
-        "query": "What was Tesla's earnings per share in Q2 of 2023?",
+        "query": "What was Tesla's earnings per share (EPS) in Q1 of 2023?",
+        "companies": ["Tesla"],
+        "keywords": ["earnings per share (EPS)"],
         "ground_truth": [
             {
                 "label_id": "chunk_001",
@@ -93,6 +234,507 @@
             }
             
         ]
+    },
+    {
+        "query": "What was Nvidia's earnings per share (EPS) in Q1 of 2024?",
+        "companies": ["Nvidia"],
+        "keywords": ["earnings per share (EPS)"],
+        "ground_truth": [
+            {
+                "label_id": "chunk_001",
+                "text": "| Diluted                                       | $                5.98 | $                0.82 |"
+            },
+            {
+                "label_id": "chunk_002",
+                "text": "| Diluted                                       | 2,489         | 2,490         |"
+            },
+            {
+                "label_id": "chunk_003",
+                "text": "| Basic (1)                           | $                         6.04   | $                        0.83     |"
+            },
+            {
+                "label_id": "chunk_004",
+                "text": "| Basic (1)                                  | $ 0.60              | $ 0.08             | $ 1.21"
+            }
+            
+        ]
+    },
+    {
+        "query": "What was Microsoft's earnings per share (EPS) in Q2 of 2024?",
+        "companies": ["Microsoft"],
+        "keywords": ["earnings per share (EPS)"],
+        "ground_truth": [
+            {
+                "label_id": "chunk_001",
+                "text": "| Earnings per share:                  |                     |         |                   |         |\n| Basic                                | $       2.94        | $ 2.20  | $      5.94       | $ 4.56  |"
+            },
+            {
+                "label_id": "chunk_002",
+                "text": "| Basic (A/B)                                                                | $            2.94  | $            2.20  | $         5.94   | $           4.56   |"
+            },
+            {
+                "label_id": "chunk_003",
+                "text": "| Diluted earnings per share          | $ 2.95         | $ 2.19         | $ 5.94         | $ 4.45         |"
+            },
+            {
+                "label_id": "chunk_004",
+                "text": "| Diluted Earnings Per Share                  | $2.93                            | $2.20            | $5.92                        | $4.54             |"
+            },
+            {
+                "label_id": "chunk_005",
+                "text": "| Diluted earnings per share                           | $ 2.93         | $ 2.20        | 33%                   | $ 5.92         | $ 4.54        | 30%               |"
+            }
+            
+        ]
+    },
+    {
+        "query": "What was Meta's earnings per share (EPS) in Q4 of 2023?",
+        "companies": ["Meta"],
+        "keywords": ["earnings per share (EPS)"],
+        "ground_truth": [
+            {
+                "label_id": "chunk_001",
+                "text": "| Diluted earnings per share (EPS)       | $ 5.33         | $ 1.76       | 203 %   | $ 14.87        | $ 8.59       | 73 %    |"
+            },
+            {
+                "label_id": "chunk_002",
+                "text": "| 2023                              | $ 5.46         | $ 5.33         |\n| 2022                              | $ 1.76         | $ 1.76         |"
+            },
+            {
+                "label_id": "chunk_003",
+                "text": "| 2023                              | 2,566          | 2,630          |\n| 2022                              | 2,638          | 2,640          |"
+            }
+            
+        ]
+    },
+    {
+        "query": "What was Google's earnings per share (EPS) in Q3 of 2022?",
+        "companies": ["Google"],
+        "keywords": ["earnings per share (EPS)"],
+        "ground_truth": [
+            {
+                "label_id": "chunk_001",
+                "text": "| Basic net income per share           | $ 1.42           | $ 1.07       |\n| Diluted net income per share         | $ 1.40           | $ 1.06       |"
+            },
+            {
+                "label_id": "chunk_002",
+                "text": "| Basic net income per share |         |         |         | $1.42   | $1.42   | $1.42   | $1.07   | $1.07   | $1.07   |"
+            },
+            {
+                "label_id": "chunk_003",
+                "text": "| **Basic net income per share** | $4.14 | $4.14 | $4.14 |"
+            },
+            {
+                "label_id": "chunk_004",
+                "text": "| Diluted EPS                                                  | $1.40                             | $1.06    | $(0.34)  | (24)%    |"
+            }
+            
+        ]
+    },
+    {
+        "query": "What was Berkshire Hathaway's earnings per share (EPS) in Q3 of 2024?",
+        "companies": ["Berkshire Hathaway"],
+        "keywords": ["earnings per share (EPS)"],
+        "ground_truth": [
+            {
+                "label_id": "chunk_001",
+                "text": "| Net earnings (loss) per average equivalent Class B share | $12.18    | $(5.88)   |\n| Average equivalent Class A shares outstanding  | 1,436,706  | 1,446,925  |"
+            },
+            {
+                "label_id": "chunk_002",
+                "text": "Since we have two classes of common stock, we provide earnings per share data on the Consolidated Statements of Earnings for average equivalent Class A shares outstanding and average equivalent Class B shares outstanding."
+            }
+            
+        ]
+    },
+    {
+        "query": "What was Amazon's earnings per share (EPS) in Q3 of 2023?",
+        "companies": ["Amazon"],
+        "keywords": ["earnings per share (EPS)"],
+        "ground_truth": [
+            {
+                "label_id": "chunk_001",
+                "text": "| Basic earnings per share                                                   | $0.28                            | $0.96                           | $(0.29)                        | $1.93                          |"
+            },
+            {
+                "label_id": "chunk_002",
+                "text": "| Shares used in computation of basic earnings per share    | 10,191      | 10,322      | 10,178      | 10,286      |"
+            },
+            {
+                "label_id": "chunk_003",
+                "text": "Diluted earnings per share is calculated using our weighted-average outstanding common shares"
+            }
+            
+        ]
+    },
+    {
+        "query": "What was Apple's total assets in Q3 of 2022?",
+        "companies": ["Apple"],
+        "keywords": ["total assets"],
+        "ground_truth": [
+            {
+                "label_id": "chunk_001",
+                "text": "| **Total assets**                                                                           | **$ 336,309**  | **$ 351,002**       |"
+            }
+            
+        ]
+    },
+    {
+        "query": "What was Tesla's total assets in Q2 of 2023?",
+        "companies": ["Tesla"],
+        "keywords": ["total assets"],
+        "ground_truth": [
+            {
+                "label_id": "chunk_001",
+                "text": "| **Total assets**                                                                          | **$90,591**    | **$82,338**        |"
+            }
+            
+        ]
+    },
+    {
+        "query": "What was Nvidia's total assets in Q1 of 2024?",
+        "companies": ["Nvidia"],
+        "keywords": ["total assets"],
+        "ground_truth": [
+            {
+                "label_id": "chunk_001",
+                "text": "| **Total assets**                                                                          | **$ 77,072**  | **$ 65,728**  |"
+            }
+            
+        ]
+    },
+    {
+        "query": "What was Microsoft's total assets in Q4 of 2023?",
+        "companies": ["Microsoft"],
+        "keywords": ["total assets"],
+        "ground_truth": [
+            {
+                "label_id": "chunk_001",
+                "text": "| **Total assets**                                                                                        | **$ 411,976**  | **$ 364,840**  |"
+            }
+            
+        ]
+    },
+    {
+        "query": "What was Meta's total assets in Q1 of 2023?",
+        "companies": ["Meta"],
+        "keywords": ["total assets"],
+        "ground_truth": [
+            {
+                "label_id": "chunk_001",
+                "text": "| **Total assets**                                                                           | **$ 184,491**  | **$ 185,727**     |"
+            }
+            
+        ]
+    },
+    {
+        "query": "What was Google's total assets in Q3 of 2022?",
+        "companies": ["Google"],
+        "keywords": ["total assets"],
+        "ground_truth": [
+            {
+                "label_id": "chunk_001",
+                "text": "| **Total assets**                                                                                | **$          359,268**   | **$           358,255**              |"
+            }
+            
+        ]
+    },
+    {
+        "query": "What was Berkshire Hathaway's total assets in Q2 of 2024?",
+        "companies": ["Berkshire Hathaway"],
+        "keywords": ["total assets"],
+        "ground_truth": [
+            {
+                "label_id": "chunk_001",
+                "text": "| **Total Assets**                                                    | $  1,108,860   | $    1,069,978     |"
+            }
+            
+        ]
+    },
+    {
+        "query": "What was Amazon's total assets in Q1 of 2024?",
+        "companies": ["Berkshire Hathaway"],
+        "keywords": ["total assets"],
+        "ground_truth": [
+            {
+                "label_id": "chunk_001",
+                "text": " **Total assets**                                                      | **$ 527,854**     | **$ 530,969**               |"
+            }
+            
+        ]
+    },
+    {
+        "query": "What was Apple's term debt in Q3 of 2024?",
+        "companies": ["Apple"],
+        "keywords": ["debt"],
+        "ground_truth": [
+            {
+                "label_id": "chunk_001",
+                "text": "| Term debt                                                            |      12,114   |           9,822     |"
+            },
+            {
+                "label_id":"chunk_002",
+                "text":"| - Proceeds from issuance of term debt, net                                                           | —                  | 5,228   |         |"
+            },
+            {
+                "label_id":"chunk_003",
+                "text":"| Current and non-current term debt                       | $     (13,096) | $         (18,247)  |"
+            }
+        ]
+    },
+    {
+        "query": "What was Amazon's long-term debt in Q1 of 2024?",
+        "companies": ["Amazon"],
+        "keywords": ["debt"],
+        "ground_truth": [
+            {
+                "label_id": "chunk_001",
+                "text": "| **Total face value of long-term debt** | | | **67,182** | **66,852** |"
+            },
+            {
+                "label_id":"chunk_002",
+                "text":"| Long-term debt principal and interest | $10,335   | $7,011    | $4,679    | $10,403   | $3,644    | $60,176    | $96,248    |"
+            },
+            {
+                "label_id":"chunk_003",
+                "text":"we had $66.5 billion of unsecured senior notes outstanding (the “Notes”) and $352 million of borrowings under our secured revolving credit facility. Our total long-term deb"
+            }
+        ]
+    },
+    {
+        "query": "What was Tesla's total debt in Q3 of 2024?",
+        "companies": ["Tesla"],
+        "keywords": ["debt"],
+        "ground_truth": [
+            {
+                "label_id": "chunk_001",
+                "text": "| **Total debt**                                | $                      2,115 | $                      5,275 | $                   7,415 | $                   5,000 |                        |                        |"
+            },
+            {
+                "label_id":"chunk_002",
+                "text":"| **Total debt**                    | 1,975   | 2,682     | $ 4,683           | $ 5,028          |                         |                           |                             |"
+            },
+            {
+                "label_id":"chunk_003",
+                "text":"| Current portion of debt and finance leases                                                  | $               2,291 | $               2,373 |"
+            }
+        ]
+    },
+    {
+        "query": "What was Microsoft's long-term debt in Q1 of 2023?",
+        "companies": ["Microsoft"],
+        "keywords": ["debt"],
+        "ground_truth": [
+            {
+                "label_id": "chunk_001",
+                "text": "| Long-term debt                                                                                   | 45,374              | 47,032         |"
+            },
+            {
+                "label_id":"chunk_002",
+                "text":"| **Long-term debt**            |                   |                    |                 | **$ 45,374** | **$ 47,032**"
+            },
+            {
+                "label_id":"chunk_003",
+                "text":"f September 30, 2022 and June 30, 2022, the estimated fair value of long-term debt, including the current portion, was $46.1 billion and $50.9 billion, respecti"
+            },
+            {
+                "label_id":"chunk_004",
+                "text":"| **Long-term debt**            |                   |                    |                 | **$ 45,374** | **$ 47,032**"
+            }
+        ]
+    },
+    {
+        "query": "What was Meta's long-term debt in Q4 of 2023?",
+        "companies": ["Meta"],
+        "keywords": ["debt"],
+        "ground_truth": [
+            {
+                "label_id": "chunk_001",
+                "text": "Long-term debt – Long-term debt was $18.39 billion as of December 31, 2023."
+            },
+            {
+                "label_id":"chunk_002",
+                "text":"| Long-term debt                                                                              | $            18,385 | $             9,923 |"
+            }
+        ]
+    },
+    {
+        "query": "What was Google's long-term debt in Q2 of 2024?",
+        "companies": ["Google"],
+        "keywords": ["debt"],
+        "ground_truth": [
+            {
+                "label_id": "chunk_001",
+                "text": "| Long-term debt                                                                                    | 13,253                   | 13,238                           |"
+            },
+            {
+                "label_id":"chunk_002",
+                "text":"| **Total long-term debt**                           |                |             |                        | **$      13,253**  | **$      13,238**  |"
+            }
+        ]
+    },
+    {
+        "query": "What was Berkshire Hathaway's long-term debt in Q3 of 2023?",
+        "companies": ["Berkshire Hathaway"],
+        "keywords": ["debt"],
+        "ground_truth": [
+            {
+                "label_id": "chunk_001",
+                "text": "| BHE senior unsecured debt due 2023-2053                                    | 4.4%                          | $ 13,600            | $ 13,996"
+            },
+            {
+                "label_id":"chunk_002",
+                "text":"In the first nine months of 2023, BHE subsidiaries issued $3.5 billion of term debt"
+            },
+            {
+                "label_id":"chunk_003",
+                "text":"BNSF’s outstanding debt was $23.5 billion as of September 30, 2023, substantially unchanged from December 31, 2022. In June 2023, BNSF issued $1.6 billion of 5.2% debentures due in 2054. During the first nine months of 2023, BNSF repaid approximately $1.5 billion of term debt."
+            }
+        ]
+    },
+    {
+        "query": "What was Nvidia's long-term debt in Q1 of 2022?",
+        "companies": ["Nvidia"],
+        "keywords": ["debt"],
+        "ground_truth": [
+            {
+                "label_id": "chunk_001",
+                "text": "| Long-term debt                                                                             | 10,947      | 10,946           |"
+            },
+            {
+                "label_id":"chunk_002",
+                "text":"| **Net carrying amount**          |                        | **$10,947 million**          | **$10,946 million**                |"
+            },
+            {
+                "label_id":"chunk_003",
+                "text":"values of our outstanding notes and their associated interest rates"
+            }
+        ]
+    },
+    {
+        "query": "What is Tesla's total cash in Q3 2023?",
+        "companies": ["Tesla"],
+        "keywords": ["total cash"],
+        "ground_truth": [
+            {
+                "label_id": "chunk_001",
+                "text": "| Total as presented in the consolidated statements of cash flows            | $16,590      | $16,924      | $20,149      | $18,144      |"
+            },
+            {
+                "label_id":"chunk_002",
+                "text":"total cash and cash equivalents and restricted cash, as presented in the consolidated statements"
+            },
+            {
+                "label_id":"chunk_003",
+                "text":"|Cash and cash equivalents and restricted cash, end of period|$16,590|$20,149|"
+            }
+        ]
+    },
+    {
+        "query": "What is Nvidia's total cash in Q2 2023?",
+        "companies": ["Nvidia"],
+        "keywords": ["total cash"],
+        "ground_truth": [
+            {
+                "label_id": "chunk_001",
+                "text": "| **Total cash, cash equivalents, and restricted cash**                                                 | **$ 5,882**      | **$ 3,013** |"
+            },
+            {
+                "label_id":"chunk_002",
+                "text":"| **Total Cash, Cash Equivalents, and Marketable Securities**        | **$16,023 million** | **$13,296 million** |"
+            }
+        ]
+    },
+    {
+        "query": "What is Microsoft's total cash in Q2 2022?",
+        "companies": ["Microsoft"],
+        "keywords": ["total cash"],
+        "ground_truth": [
+            {
+                "label_id": "chunk_001",
+                "text": "| **Total cash, cash equivalents, and short-term investments**                                            | **125,369**       | **130,334**    |"
+            }
+        ]
+    },
+    {
+        "query": "What is Meta's total cash in Q2 2024?",
+        "companies": ["Meta"],
+        "keywords": ["total cash"],
+        "ground_truth": [
+            {
+                "label_id": "chunk_001",
+                "text": "| **Total cash, cash equivalents, and restricted cash**      | **$ 33,026**  | **$ 29,804**  | **$ 33,026**  | **$ 29,804**  |"
+            },
+            {
+                "label_id":"chunk_002",
+                "text":"| **Cash, cash equivalents, and restricted cash at end of the period** | **$ 33,026**  | **$ 29,804**  | **$ 33,026**  | **$ 29,804**  |"
+            }
+        ]
+    },
+    {
+        "query": "What is Google's total cash in Q2 2024?",
+        "companies": ["Google"],
+        "keywords": ["total cash"],
+        "ground_truth": [
+            {
+                "label_id": "chunk_001",
+                "text": "| **Total cash, cash equivalents, and marketable securities**                                     | **110,916**              | **93,230**                            |"
+            },
+            {
+                "label_id":"chunk_002",
+                "text":"During the three and nine months ended September 30, 2024, total cash dividends were $1.2 billion and $2.3 billion for Class A, $173 million and $346 million for Class B, and $1.1 billion and $2.2 billion for Class C shares, respectively."
+            },
+            {
+                "label_id":"chunk_003",
+                "text":"During the three and nine months ended September 30, 2024, total cash dividends were $1.2 billion and $2.3 billion for Class A, $173 million and $346 million for Class B, and $1.1 billion and $2.2 billion for Class C shares, respectively."
+            }
+        ]
+    },
+    {
+        "query": "What is Berkshire Hathaway's total cash in Q1 2022?",
+        "companies": ["Berkshire Hathaway"],
+        "keywords": ["total cash"],
+        "ground_truth": [
+            {
+                "label_id": "chunk_001",
+                "text": "| Cash and cash equivalents and restricted cash at end of first quarter* | $ 39,662   | $ 60,488   |"
+            },
+            {
+                "label_id":"chunk_002",
+                "text":"| **Total**                                               | **$ 39,662** | **$ 60,488** |"
+            }
+        ]
+    },
+    {
+        "query": "What is Apple's total cash in Q1 2023?",
+        "companies": ["Apple"],
+        "keywords": ["total cash"],
+        "ground_truth": [
+            {
+                "label_id": "chunk_001",
+                "text": "| Cash, cash equivalents and restricted cash, ending balances                 | $21,974                          | $38,630                          |"
+            }
+        ]
+    },
+    {
+        "query": "What is Amazon's total cash in Q4 2022?",
+        "companies": ["Amazon"],
+        "keywords": ["total cash"],
+        "ground_truth": [
+            {
+                "label_id": "chunk_001",
+                "text": "| **Total cash, cash equivalents, and marketable securities**                  |                        |                        |                         | **$          96,049**      |"
+            },
+            {
+                "label_id":"chunk_002",
+                "text":"| **Total cash, cash equivalents, and marketable securities**              |                        |                        |                         | **$          70,026**      |"
+            },
+            {
+                "label_id":"chunk_003",
+                "text":"| **Total cash, cash equivalents, and restricted cash**                      | **$36,477**       | **$54,253**       |"
+            }
+        ]
     }
+
     
   ]

@@ -27,7 +27,7 @@ system_prompt = """You are an AI assistant tasked with answering financial quest
                 </query>
     ```
     
-    When the user asks a question about a company, use information from the <context> element to answer the question asked in <query>.
+    When the user asks a question about a company, use information from the <context> element to answer the question asked in <query>. Assume that the <context> information is relevant to the company and time period asked about, even if not explicitly stated.
     
     
     

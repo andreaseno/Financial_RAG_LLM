@@ -130,6 +130,42 @@ try:
     
     # Read and process markdown files
     read_markdown_files(base_dir)
+    
+    # Delete any duplicate chunks
+    cursor.execute("""DELETE FROM text_chunks
+                        WHERE id IN (
+                            SELECT id
+                            FROM (
+                                SELECT 
+                                    id,
+                                    ROW_NUMBER() OVER (
+                                        PARTITION BY text, company, year, document_type, fiscal_quarter 
+                                        ORDER BY id
+                                    ) AS row_num
+                                FROM text_chunks
+                            ) AS subquery
+                            WHERE row_num > 1
+                        );
+                    DELETE FROM embedding_chunks
+                        WHERE id NOT IN (SELECT id FROM text_chunks);
+                    DELETE FROM embedding_chunks
+                        WHERE id IN (
+                            SELECT id
+                            FROM (
+                                SELECT 
+                                    id,
+                                    ROW_NUMBER() OVER (
+                                        PARTITION BY embedding, company, year, document_type, fiscal_quarter 
+                                        ORDER BY id
+                                    ) AS row_num
+                                FROM embedding_chunks
+                            ) AS subquery
+                            WHERE row_num > 1
+                        );
+                    DELETE FROM text_chunks
+                        WHERE id NOT IN (SELECT id FROM embedding_chunks);
+                        """)
+    conn.commit()
     print("\nFinished populating database")
     
 

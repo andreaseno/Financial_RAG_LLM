@@ -13,7 +13,7 @@ tokenizer = AutoTokenizer.from_pretrained("yiyanghkust/finbert-tone")
 # Both in tokens
 MAX_CHUNK_LEN = 512
 MIN_CHUNK_LEN = 300
-DEBUG = True
+DEBUG = False
 
 def summarize_table(table, section_buffer):
     """
@@ -27,20 +27,31 @@ def summarize_table(table, section_buffer):
         strings list(str): list of strings
     """
     
-    message = f"""The given table context and contains a chunk of information from a 10Q/10K financial document. Specifically, it contains a table in 
-    markdown format with preceding context. Give a 1 to 3 sentence summary of the document based on the column names, row names, and preceding context in 200 or less words.
-    Do not include any specific information about the figures contained in the table.
-    Your message should only contain the summary, so leave out any wording like "Here is a summary of the table in 300 words or less:"
+    message = f"""Below you are given a table and preceding context from a 10Q/10K financial document. 
+    Both are in markdown format. Give a concise 1 to 3 sentence description of the table based on 
+    the column names, row names, and preceding context in 200 or less words.
+    Do not include any specifics about the values from the table.
+    Your message should only contain the table summary, so leave out any wording like "Here is a summary of the table in 300 words or less:"
+    Also, do not talk about the financial document itself.
+    Focus on concision in your summary.
     
     
     context:
+    <context>
     {" ".join(section_buffer)}
+    </context>
     
-    text:
+    table:
+    <table>
     {table}
+    </table>
     
     """
+    write_debug_log(f"context: {' '.join(section_buffer)}\n\n\n",log_file="chunking_test_log.md", with_timestamp=False)
+    write_debug_log(f"table: {table}\n\n\n",log_file="chunking_test_log.md", with_timestamp=False)
     response = ollama.chat(model='llama3.2:1b', messages=[{'role': 'user', 'content': message,},])
+    write_debug_log(f"summary: {response['message']['content']}\n\n\n",log_file="chunking_test_log.md", with_timestamp=False)
+    write_debug_log(message="-"*128,log_file="chunking_test_log.md", with_timestamp=False)
     return response["message"]["content"]
 
 def check_nearest_punctuation(strlist, front = True):
@@ -236,8 +247,8 @@ def is_section_header(line: str) -> bool:
     Returns:
         ____ bool: whether line is header or not
     """
-    # Check if the line starts with '#' followed by a space
-    return line.strip().startswith('# ') and len(line.strip()) > 2
+    # Check if the line starts with any number of '#' followed by a space
+    return bool(re.match(r'^#+ ', line.strip())) and len(line.strip()) > 2
 
 def is_table(line):
     """
@@ -311,7 +322,7 @@ def add_line(buffer, line):
     Returns:
         None
     """
-    if (not line == None):
+    if (not line == None and line.strip()):
         buffer.append(line)
 
 def chunk_markdown(md_text, max_chunk_length, verbose=False):
@@ -335,6 +346,9 @@ def chunk_markdown(md_text, max_chunk_length, verbose=False):
     if DEBUG:
         write_debug_log("Chunking Started.")
     
+    # Flag to keep track of if the previous line was from chunking a table
+    table_parsed = False
+    
     for i, line in enumerate(lines):
         if verbose:
             print(f"Chunking line {i+1}")
@@ -348,30 +362,34 @@ def chunk_markdown(md_text, max_chunk_length, verbose=False):
             continue
         # Check if new section has started
         if is_section_header(line):
-            # TODO: Check whether section buffer contains any lines other than header lines to prevent header->table->header edge case
+            # Check whether section buffer contains any lines other than header lines to prevent header->table->header edge case
             all_section_header = True
             for added_line in section_buffer:
                 if (not is_section_header(added_line)):
                     all_section_header = False
                     break
             if (all_section_header):
-                section_buffer = []
+                if ( table_parsed): 
+                    section_buffer = []
+                table_parsed = False
                 add_line(section_buffer, line)
                 continue
+            table_parsed = False
+            
+            
                 
-            # Check section length to prevent small chunk sizes
-            if(num_tokens(" ".join(section_buffer), tokenizer) < MIN_CHUNK_LEN):
-                # If so, continue parsing to add the next section
-                add_line(section_buffer, line)
-                continue
+            # # Check section length to prevent small chunk sizes
+            # if(num_tokens(" ".join(section_buffer), tokenizer) < MIN_CHUNK_LEN):
+            #     # If so, continue parsing to add the next section
+            #     add_line(section_buffer, line)
+            #     continue
             # Check section length to prevent large chunk sizes
-            elif(num_tokens(" ".join(section_buffer), tokenizer) > max_chunk_length):
+            if(num_tokens(" ".join(section_buffer), tokenizer) > max_chunk_length):
                 # if so break into smaller chunks
-                # TODO: Rewrite chunk_section
                 chunks.extend(chunk_section(section_buffer, max_chunk_length))
                 section_buffer = []
                 add_line(section_buffer, line)
-            # If section length is in between min and max length, add to chunks and continue
+            # If section length is in less than max length, add to chunks and continue
             else: 
                 chunks.extend(chunk_section(section_buffer, max_chunk_length))
                 section_buffer = []
@@ -379,13 +397,14 @@ def chunk_markdown(md_text, max_chunk_length, verbose=False):
             
          # if not check if line is a table
         elif is_table(line):
-            # TODO: Rewrite hangle_table to not use while loop
             table_chunk, line = handle_table(lines, line)
             chunks.append((table_chunk, summarize_table(table_chunk, section_buffer)))
+            table_parsed = True
         # Otherwise, line must be a normal text line, so add it to the section bufer
         else:
             # Add to the current paragraph buffer
             add_line(section_buffer, line)
+            table_parsed = False
 
     # Final flush for any remaining paragraph
     if section_buffer:
@@ -393,19 +412,16 @@ def chunk_markdown(md_text, max_chunk_length, verbose=False):
     return chunks
 
 
-
-
-# UNCOMMENT BELOW TO TEST CHUNKING ALGORITHM
-# WILL OUTPUT A SINGLE CHUNKED DOCUMENT TO output.md
-
-# Define the path to the folder with markdown files
-path = "/Users/oga/Desktop/gwu_stuff/Masters Stuff/LLM Research/md_files/Tesla/2024/10Q_10K/10Q-Q2-2024.pdf.md"
-with open(path, 'r', encoding='utf-8') as file:
-    content = file.read()
-markdown_text = content
-chunks = chunk_markdown(markdown_text, max_chunk_length=MAX_CHUNK_LEN, verbose=True)
-# for i, chunk in enumerate(chunks):
-#     print(f"Chunk {i + 1}:\n{chunk}\n")
-with open("output.md", "w") as f:
-    for chunk in chunks:
-        f.write(str(chunk) + "\n-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-\n")  # Separator between chunks
+# FOR TESTING PURPOSES
+if __name__ == "__main__":
+    # Define the path to the folder with markdown files
+    path = "/Users/oga/Desktop/gwu_stuff/Masters Stuff/LLM Research/md_files/Tesla/2024/10Q_10K/10Q-Q2-2024.pdf.md"
+    with open(path, 'r', encoding='utf-8') as file:
+        content = file.read()
+    markdown_text = content
+    chunks = chunk_markdown(markdown_text, max_chunk_length=MAX_CHUNK_LEN, verbose=True)
+    # for i, chunk in enumerate(chunks):
+    #     print(f"Chunk {i + 1}:\n{chunk}\n")
+    with open("output.md", "w") as f:
+        for chunk in chunks:
+            f.write(str(chunk) + "\n-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-\n")  # Separator between chunks
