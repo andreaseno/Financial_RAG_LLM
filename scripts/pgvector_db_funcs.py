@@ -218,7 +218,7 @@ def retrieve_n(query = "", n = 5, company_filter = [], year_filter = [], quarter
             # Sort by combined score
             scoring_df = scoring_df.sort_values('cosine_similarity', ascending=False)
         # Print or use the results
-        print(scoring_df.head(10))
+        # print(scoring_df.head(10))
 
         ret = []
         # Print Hybrid search results

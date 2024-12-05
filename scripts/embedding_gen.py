@@ -10,7 +10,7 @@ MAX_CHUNK_SIZE = 512
 
 def generate_embedding(tokenizer=tokenizer, model=model, text="", max_chunk_size=MAX_CHUNK_SIZE):
     # Tokenize the input text and return PyTorch tensors
-    encoded_input = tokenizer(text, max_length=512, padding=False, return_tensors='pt')
+    encoded_input = tokenizer(text, max_length=512, truncation=True, padding=False, return_tensors='pt')
 
     # Pass the encoded input to the model to get hidden states
     with torch.no_grad():  # Disable gradient calculations for inference

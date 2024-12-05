@@ -1,3 +1,6 @@
+import warnings
+warnings.filterwarnings("ignore", category=FutureWarning)
+
 import ollama
 import json
 import psycopg2
@@ -14,6 +17,8 @@ password = "adminpass"   # Password you provided during setup
 
 # Initialize the Ollama client
 client = ollama.Client()
+
+retrieved_files_path = "retrieved_documents.md"
 
 system_prompt = """You are an AI assistant tasked with answering financial questions. Your task is to answer simple questions about a company based on the <context> element of the query.
     Here is an example query in the same format queries will be asked
@@ -126,23 +131,17 @@ def retrieval_step(message = "", n = 5, hybrid_search = True, debug = False):
     # Perform Retrieval and get top n chunks
     return retrieve_n(message, n, companies_list, years_list, quarters_list, hybrid_search=hybrid_search)
 
-def generation_step(message = "", top_n = None, conversation = None, eval = False, debug = False):
+def generation_step(message = "", top_n = None, eval = False, debug = False):
     """Function to perform the generation step of the RAG pipeline. 
 
     Args:
         message (str): message for the LLM to answer. Defaults to "".
         top_n (list): List of chunks returned by the retrieval step. 
-        conversation (list): Conversation that was created before user was queried. Should contain all previous questions asked. 
         debug (bool, optional): Flag to print debugging and other print statements to command line. Defaults to False.
 
     Returns:
         None
     """
-    
-    if (not conversation):
-        conversation = [
-            {"role": "system", "content": system_prompt},
-        ]
     
     # Build context
     context = ""
@@ -160,7 +159,10 @@ def generation_step(message = "", top_n = None, conversation = None, eval = Fals
                     
                     '''
     
-    conversation.append({"role": "user", "content": injected_query})
+    conversation = [
+        {"role": "system", "content": system_prompt},
+        {"role": "user", "content": injected_query},
+    ]
 
     # Send the chat to the model with streaming enabled
     if eval:
@@ -175,6 +177,31 @@ def generation_step(message = "", top_n = None, conversation = None, eval = Fals
             print(content, end='')
         # Ensure the print ends with a new line
         print("\n")
+        
+def clear_retrieved_documents(debug = False):
+    with open(retrieved_files_path, "w") as file:
+        file.write("")  
+    if debug: print(f"The file \"{retrieved_files_path}\" has been cleared.")
+
+        
+def save_retrieved_documents(documents, query, query_count, debug = False):
+    with open(retrieved_files_path, "a") as file:
+        file.write("-"*128)
+        file.write(f"\nUser Query #{query_count+1}\n")
+        file.write("-"*128)
+        file.write("\n\n")
+        file.write(f"Query: {query}")
+        file.write("\n\n")
+        file.write("-"*128)
+        file.write(f"\nRetrieved Documents\n")
+        file.write("-"*128)
+        file.write("\n"*2)
+        for i, doc in enumerate(documents):
+            file.write(f"Document {i}:\n {doc[0]}\n\n\n")
+        file.write("_"*128)
+        file.write("\n"*3)
+        
+
 
 def run_llm(n = 5, debug = False):
     """Function to combine the retrieval and generation steps into one function. Does so in a way that presents an interactable CLI
@@ -202,14 +229,14 @@ def run_llm(n = 5, debug = False):
         # Create a cursor to perform database operations
         cursor = conn.cursor()
         
+        # Clear retrieved files log
+        clear_retrieved_documents()
+        query_count = 0
+        
         # Welcome user
-        print("System: Welcome to my Financial LLM. Please ask a Question:")
+        print("\nSystem: Welcome to my Financial LLM. Please ask a Question:")
         print()
 
-        # Define conversation
-        conversation = [
-            {"role": "system", "content": system_prompt},
-        ]
         # LLM loop
         # Process:
         # - First grab the users query, and ask the model to extract the year and company of focus
@@ -231,10 +258,15 @@ def run_llm(n = 5, debug = False):
             
             if debug: print(top_n)
             
-            generation_step(message, top_n, conversation)
+            generation_step(message, top_n)
             
+            save_retrieved_documents(top_n, message, query_count)
+            
+            print(f"The retrieved documents have been saved to \"{retrieved_files_path}\" for your review.\n")
+            
+            query_count += 1
     except Exception as error:
         print(f"Error connecting to the database: {error}")
         
 if __name__ == "__main__":
-    run_llm(n = 3, debug = True)
+    run_llm(n = 3, debug = False)
