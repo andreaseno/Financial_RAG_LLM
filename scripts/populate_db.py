@@ -114,16 +114,20 @@ try:
     # Create a cursor to perform database operations
     cursor = conn.cursor()
     
-    # Example query: Create a table
+    # Ensure the `pg_trgm` extension is enabled (for indexing)
+    cursor.execute("CREATE EXTENSION IF NOT EXISTS pg_trgm;")
+    conn.commit()
+    
+    # Create embedding chunks table
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS embedding_chunks (id bigserial PRIMARY KEY, embedding vector(768), company TEXT, year VARCHAR(4), document_type VARCHAR(255), fiscal_quarter VARCHAR(2));
 
     """)
     conn.commit()  # Commit the transaction
     
-    # Example query: Create a table
+    # Create text_chunks table
     cursor.execute("""
-        CREATE TABLE IF NOT EXISTS text_chunks (id bigint PRIMARY KEY, text TEXT, company TEXT, year VARCHAR(4), document_type VARCHAR(255), fiscal_quarter VARCHAR(2));
+        CREATE TABLE IF NOT EXISTS text_chunks (id bigint PRIMARY KEY, text TEXT, company TEXT, year VARCHAR(4), document_type VARCHAR(255), fiscal_quarter VARCHAR(2), text_vectors tsvector);
 
     """)
     conn.commit()  # Commit the transaction
@@ -166,6 +170,20 @@ try:
                         WHERE id NOT IN (SELECT id FROM embedding_chunks);
                         """)
     conn.commit()
+
+    cursor.execute("""
+        UPDATE text_chunks
+        SET text_vectors = to_tsvector('english', text);
+    """)
+    conn.commit()
+    
+    cursor.execute("""
+        CREATE INDEX IF NOT EXISTS text_vectors_idx
+        ON text_chunks
+        USING gin(text_vectors);
+    """)
+    conn.commit()
+    
     print("\nFinished populating database")
     
 

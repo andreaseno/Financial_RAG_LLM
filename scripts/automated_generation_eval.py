@@ -10,6 +10,9 @@ from funcs import write_debug_log
 # by simple taking a sliding window and asking about every period in the sliding window, and simultaneously 
 # querying finance for that data and making assumptions based on conditions.
 
+# Global debug log name to write debug statements
+debug_file = "auto_gen_eval_log.md"
+
 # Function to evaluate performance based on calculated values
 def evaluate_performance(percentage_change, volatility, average_daily_volume):
     percentage_change_threshold = 5  # in percentage
@@ -34,7 +37,7 @@ def get_stock_prices(ticker, start_date, end_date):
 def get_company_performance(ticker, start_date, end_date, verbose = False):
     stock_prices = get_stock_prices(ticker, start_date, end_date)
     if stock_prices.empty:
-        write_debug_log("No stock data found for the given ticker and date range.", log_file="auto_gen_eval_log.md", with_timestamp=False, print_message=True)
+        write_debug_log("No stock data found for the given ticker and date range.", log_file=debug_file, with_timestamp=False, print_message=True)
         
         return
     # Calculate performance metrics
@@ -52,12 +55,12 @@ def get_company_performance(ticker, start_date, end_date, verbose = False):
     # Output performance analysis
     # This is a good place to start, could expand on this by doing comparative analysis to other stocks in the same industry
     if verbose:
-        write_debug_log(f"Performance Analysis for {ticker}:", log_file="auto_gen_eval_log.md", with_timestamp=False, print_message=True)
-        write_debug_log(f"Initial Closing Price: ${initial_price:.2f}", log_file="auto_gen_eval_log.md", with_timestamp=False, print_message=True)
-        write_debug_log(f"Final Closing Price: ${final_price:.2f}", log_file="auto_gen_eval_log.md", with_timestamp=False, print_message=True)
-        write_debug_log(f"Percentage Change: {percentage_change:.2f}%", log_file="auto_gen_eval_log.md", with_timestamp=False, print_message=True)
-        write_debug_log(f"Volatility: {volatility:.2f}%", log_file="auto_gen_eval_log.md", with_timestamp=False, print_message=True)
-        write_debug_log(f"Average Daily Volume: {average_volume:.0f}\n", log_file="auto_gen_eval_log.md", with_timestamp=False, print_message=True)
+        write_debug_log(f"Performance Analysis for {ticker}:", log_file=debug_file, with_timestamp=False, print_message=True)
+        write_debug_log(f"Initial Closing Price: ${initial_price:.2f}", log_file=debug_file, with_timestamp=False, print_message=True)
+        write_debug_log(f"Final Closing Price: ${final_price:.2f}", log_file=debug_file, with_timestamp=False, print_message=True)
+        write_debug_log(f"Percentage Change: {percentage_change:.2f}%", log_file=debug_file, with_timestamp=False, print_message=True)
+        write_debug_log(f"Volatility: {volatility:.2f}%", log_file=debug_file, with_timestamp=False, print_message=True)
+        write_debug_log(f"Average Daily Volume: {average_volume:.0f}\n", log_file=debug_file, with_timestamp=False, print_message=True)
     
     return evaluate_performance(percentage_change, volatility, average_volume)
 
@@ -95,7 +98,7 @@ def get_quarter_start_dates(fiscal_start, year):
 
     return quarter_starts
 
-def generation_eval(companies, years, verbose = False):
+def generation_eval(companies, years, k, verbose = False):
     try:
         count_correct = 0
         count_total = 0
@@ -115,13 +118,13 @@ def generation_eval(companies, years, verbose = False):
                     if end_date.date() > today:
                         continue
                     
-                    if verbose: write_debug_log(f"Automated evaluation for {company['name']} for Q{quarter} of {year} ({start_date.strftime('%m/%d/%Y')} - {end_date.strftime('%m/%d/%Y')}):\n", log_file="auto_gen_eval_log.md", with_timestamp=False, print_message=True)
+                    if verbose: write_debug_log(f"Automated evaluation for {company['name']} for Q{quarter} of {year} ({start_date.strftime('%m/%d/%Y')} - {end_date.strftime('%m/%d/%Y')}):\n", log_file=debug_file, with_timestamp=False, print_message=True)
 
                     
                     performance = get_company_performance(company['ticker'], start_date, end_date, verbose = verbose)
                     
                     query = f"Did {company['name']} perform well in Q{quarter} of {year}?"
-                    top_n = retrieval_step(message = query, n = 5)
+                    top_n = retrieval_step(message = query, hybrid_search=True, n = k)
                     
                     query += """
                     
@@ -141,9 +144,9 @@ def generation_eval(companies, years, verbose = False):
                         last_match = matches[-1]  # Get the last match
                         value = last_match.group(1).lower() == 'true'  # This will give you 'true' or 'false'
                         if verbose:
-                            write_debug_log(f'LLM response: {answer}\n', log_file="auto_gen_eval_log.md", with_timestamp=False, print_message=True)
+                            write_debug_log(f'LLM response: {answer}\n', log_file=debug_file, with_timestamp=False, print_message=True)
                     else:
-                        write_debug_log(f'ERROR WITH REGULAR EXPRESSION MATCHING ON RETURNED ANSWER: {answer}', log_file="auto_gen_eval_log.md", with_timestamp=False, print_message=True)
+                        write_debug_log(f'ERROR WITH REGULAR EXPRESSION MATCHING ON RETURNED ANSWER: {answer}', log_file=debug_file, with_timestamp=False, print_message=True)
                         failure = True
 
                     
@@ -156,22 +159,22 @@ def generation_eval(companies, years, verbose = False):
                     if performance == value and not failure:
                         count_correct += 1
                         company_counts[company['name']]['count_correct'] += 1
-                        write_debug_log("LLM performance evaluation Was a SUCCESS\n", log_file="auto_gen_eval_log.md", with_timestamp=False, print_message=True)
+                        write_debug_log("LLM performance evaluation Was a SUCCESS\n", log_file=debug_file, with_timestamp=False, print_message=True)
                     else:
-                        write_debug_log("LLM performance evaluation Was a FAILURE\n", log_file="auto_gen_eval_log.md", with_timestamp=False, print_message=True)
+                        write_debug_log("LLM performance evaluation Was a FAILURE\n", log_file=debug_file, with_timestamp=False, print_message=True)
                         
                     if not failure:
                         count_total += 1
                         company_counts[company['name']]['count_total'] += 1
-                        write_debug_log(message="", log_file="auto_gen_eval_log.md", with_timestamp=False, print_message=True)
-                        write_debug_log("-"*128, log_file="auto_gen_eval_log.md", with_timestamp=False, print_message=True)
-                        write_debug_log(message="",  log_file="auto_gen_eval_log.md", with_timestamp=False, print_message=True)
-        write_debug_log(f"total correct = {count_correct}", log_file="auto_gen_eval_log.md", with_timestamp=False, print_message=True)
-        write_debug_log(f"total correct percentage = {count_correct/count_total}", log_file="auto_gen_eval_log.md", with_timestamp=False, print_message=True)
-        write_debug_log(message="", log_file="auto_gen_eval_log.md", with_timestamp=False, print_message=True)
+                        write_debug_log(message="", log_file=debug_file, with_timestamp=False, print_message=True)
+                        write_debug_log("-"*128, log_file=debug_file, with_timestamp=False, print_message=True)
+                        write_debug_log(message="",  log_file=debug_file, with_timestamp=False, print_message=True)
+        write_debug_log(f"total correct = {count_correct}", log_file=debug_file, with_timestamp=False, print_message=True)
+        write_debug_log(f"total correct percentage = {count_correct/count_total}", log_file=debug_file, with_timestamp=False, print_message=True)
+        write_debug_log(message="", log_file=debug_file, with_timestamp=False, print_message=True)
         for c_name, c_count in company_counts.items():
-            write_debug_log(f"{c_name}: {c_count['count_correct']}/{c_count['count_total']} - {c_count['count_correct']/c_count['count_total']}", log_file="auto_gen_eval_log.md", with_timestamp=False, print_message=True)
-        write_debug_log("\n"*6, log_file="auto_gen_eval_log.md", with_timestamp=False, print_message=True)
+            write_debug_log(f"{c_name}: {c_count['count_correct']}/{c_count['count_total']} - {c_count['count_correct']/c_count['count_total']}", log_file=debug_file, with_timestamp=False, print_message=True)
+        write_debug_log("\n"*6, log_file=debug_file, with_timestamp=False, print_message=True)
         
         return count_correct, count_total, company_counts
                     
@@ -183,7 +186,7 @@ def generation_eval(companies, years, verbose = False):
                 
                 
     except Exception as e:
-        write_debug_log(f"An error occurred: {e}", log_file="auto_gen_eval_log.md", with_timestamp=False, print_message=True)
+        write_debug_log(f"An error occurred: {e}", log_file=debug_file, with_timestamp=False, print_message=True)
 
 if __name__ == "__main__":
     # ticker_symbol = input("Enter the stock ticker symbol (e.g., AAPL, TSLA): ")
@@ -227,34 +230,37 @@ if __name__ == "__main__":
                 }
             ]
     years = [2022, 2023, 2024]
+    num_trials = 5
     
     # generation_eval(companies, years, True)
     
-    num_trials = 5
-    overall_average_sum = 0
-    
-    overall_company_sum = {}
-    
-    for c in companies:
-        overall_company_sum[c['name']] = {
-                            'count_correct': 0,
-                            'count_total': 0
-                        }
-    
-    for _ in range(num_trials):
+
+    for k in range(2,5):
+        debug_file = f"auto_gen_eval_log_posthybrid_k_equals_{k}.md"
         
-        correct_responses, total_count, company_counts = generation_eval(companies, years, True)
-        overall_average_sum += correct_responses/total_count
-        for c_name, c_count in company_counts.items():
-            overall_company_sum[c_name]['count_correct'] += c_count['count_correct']
-            overall_company_sum[c_name]['count_total'] += c_count['count_total']
+        overall_average_sum = 0
+        
+        overall_company_sum = {}
+        
+        for c in companies:
+            overall_company_sum[c['name']] = {
+                                'count_correct': 0,
+                                'count_total': 0
+                            }
+        for _ in range(num_trials):
+            
+            correct_responses, total_count, company_counts = generation_eval(companies, years, k, True)
+            overall_average_sum += correct_responses/total_count
+            for c_name, c_count in company_counts.items():
+                overall_company_sum[c_name]['count_correct'] += c_count['count_correct']
+                overall_company_sum[c_name]['count_total'] += c_count['count_total']
             
         
     
-    write_debug_log("\n"*5, log_file="auto_gen_eval_log.md", with_timestamp=False, print_message=True)
-    write_debug_log(f"Overall Average Across {num_trials} trials: {overall_average_sum/num_trials}\n", log_file="auto_gen_eval_log.md", with_timestamp=False, print_message=True)
-    
-    for c_name, c_count in overall_company_sum.items():
-        write_debug_log(f"{c_name}: {c_count['count_correct']}/{c_count['count_total']} - {c_count['count_correct']/c_count['count_total']}", log_file="auto_gen_eval_log.md", with_timestamp=False, print_message=True)
+        write_debug_log("\n"*5, log_file=debug_file, with_timestamp=False, print_message=True)
+        write_debug_log(f"Overall Average Across {num_trials} trials: {overall_average_sum/num_trials}\n", log_file=debug_file, with_timestamp=False, print_message=True)
+        
+        for c_name, c_count in overall_company_sum.items():
+            write_debug_log(f"{c_name}: {c_count['count_correct']}/{c_count['count_total']} - {c_count['count_correct']/c_count['count_total']}", log_file=debug_file, with_timestamp=False, print_message=True)
         
     

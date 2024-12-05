@@ -34,7 +34,7 @@ system_prompt = """You are an AI assistant tasked with answering financial quest
     
 """
 
-def retrieval_step(message = "", n = 5, debug = False):
+def retrieval_step(message = "", n = 5, hybrid_search = True, debug = False):
     """Function to perform the retrieval step of the RAG pipeline. 
 
     Args:
@@ -124,7 +124,7 @@ def retrieval_step(message = "", n = 5, debug = False):
         print(quarters_list)
     
     # Perform Retrieval and get top n chunks
-    return retrieve_n(message, n, companies_list, years_list, quarters_list)
+    return retrieve_n(message, n, companies_list, years_list, quarters_list, hybrid_search=hybrid_search)
 
 def generation_step(message = "", top_n = None, conversation = None, eval = False, debug = False):
     """Function to perform the generation step of the RAG pipeline. 
@@ -227,7 +227,7 @@ def run_llm(n = 5, debug = False):
                 conn.close()
                 break
             
-            top_n = retrieval_step(message = message, n = n)
+            top_n = retrieval_step(message = message, n = n, hybrid_search=False)
             
             if debug: print(top_n)
             
