@@ -21,7 +21,7 @@ client = ollama.Client()
 retrieved_files_path = "retrieved_documents.md"
 
 system_prompt = """You are an AI assistant tasked with answering financial questions. Your task is to answer simple questions about a company based on the <context> element of the query.
-    Here is an example query in the same format queries will be asked
+    Here is an example query in the same format queries will be asked:
     
     ```
     **Context**: <context>
@@ -39,97 +39,163 @@ system_prompt = """You are an AI assistant tasked with answering financial quest
     
 """
 
-def retrieval_step(message = "", n = 5, hybrid_search = True, debug = False):
+def extract_query_details(query):
+    # List of valid companies and their stock tickers
+    companies = [
+        'Tesla', 'Apple', 'Nvidia', 'Microsoft', 'Meta', 'Amazon', 'Google', 'Berkshire Hathaway'
+    ]
+    stock_tickers = {
+        'Tesla': 'TSLA',
+        'Apple': 'AAPL',
+        'Nvidia': 'NVDA',
+        'Microsoft': 'MSFT',
+        'Meta': 'META',
+        'Amazon': 'AMZN',
+        'Google': 'GOOGL',
+        'Berkshire Hathaway': 'BRK'
+    }
+
+    company_pattern = re.compile(
+        r'\b(?:' + '|'.join(fr'{re.escape(c)}(?:\'s|s)?' for c in companies) + r'|'
+        + '|'.join(re.escape(t) for t in stock_tickers.values()) + r')\b',
+        re.IGNORECASE
+    )
+    # Match explicit year ranges or individual years
+    year_pattern = re.compile(r'\b(20[0-9]{2})(?:[-\s]*(?:to|through|-)\s*(20[0-9]{2}))?\b', re.IGNORECASE)
+    # Match quarters
+    quarter_pattern = re.compile(r'\bQ[1-4]\b', re.IGNORECASE)
+
+    # Extract matches
+    matched_companies = company_pattern.findall(query)
+    matched_years = year_pattern.findall(query)
+    matched_quarters = quarter_pattern.findall(query)
+
+    # Normalize company names by matching against the stock tickers
+    normalized_companies = []
+    for match in matched_companies:
+        # Check if match is a ticker, convert to company name
+        match = re.sub(r'(\'s|s\')$', '', match, flags=re.IGNORECASE)  # Remove possessive suffix
+        for company, ticker in stock_tickers.items():
+            if match.upper() == ticker:
+                normalized_companies.append(company)
+                break
+        else:
+            # If not a ticker, it's already a company name
+            normalized_companies.append(match)
+
+    # Process years
+    all_years = set()
+    for start, end in matched_years:
+        if end:  # If there's a range (e.g., "2022-2024")
+            all_years.update(range(int(start), int(end) + 1))
+        else:  # Single year
+            all_years.add(int(start))
+
+    # Remove duplicates and normalize casing
+    normalized_companies = list(set([c.title() for c in normalized_companies]))
+
+    return {
+        'Companies': normalized_companies,
+        'Years': sorted(all_years),
+        'Quarters': [q.upper() for q in matched_quarters]
+    }
+
+def retrieval_step(message = "", n = 5, hybrid_search = True, chunk_filtering = False, debug = False, verbose = False):
     """Function to perform the retrieval step of the RAG pipeline. 
 
     Args:
         message (str): Query to retrieve chunks for. Defaults to "".
         n (int): number of chunks to return. Defaults to 5.
+        hybrid_search (bool, optional): Flag to enable or disable hybrid search. Defaults to False.
         debug (bool, optional): Flag to print debugging and other print statements to command line. Defaults to False.
+        verbose (bool, optional): Flag to print verbose options of retrieve_n(). Defaults to False.
 
     Returns:
         ret list(str): top n chunks in list format
     """
     
-    # Define the prompt to use when extracting out the information from the user query
-    extraction_prompt = f"""
-    I am going to give you a users query that they are prompting to a financial chatbot. Take that query, and extract out the company
-    or companies, year or years, and quarter or quearters that relate to the user's query. Then provide that information in three python lists in your response.
+    # # Define the prompt to use when extracting out the information from the user query
+    # extraction_prompt = f"""
+    # I am going to give you a users query that they are prompting to a financial chatbot. Take that query, and extract out the company
+    # or companies, year or years, and quarter or quearters that relate to the user's query. Then provide that information in three python lists in your response.
     
-    Below is two examples of what your response should look like given an query.
+    # Below is two examples of what your response should look like given an query.
     
-    ### Example Query 1
+    # ### Example Query 1
     
-    Query Structure:
-    ```
-    **Query**: <query>
-                What is Apple's earnings in 2024?
-                </query>
-    ```
+    # Query Structure:
+    # ```
+    # **Query**: <query>
+    #             What is Apple's earnings in 2024?
+    #             </query>
+    # ```
     
-    Your Response:
-    ```
-    **Companies** = ['Apple']
-    **Years** = [2024]
-    **Quarters** = []
-    ```
+    # Your Response:
+    # ```
+    # **Companies** = ['Apple']
+    # **Years** = [2024]
+    # **Quarters** = []
+    # ```
     
-    ### Example Query 2
+    # ### Example Query 2
     
-    Query Structure:
-    ```
-    **Query**: <query>
-                Compare the average revenue of Tesla to Microsoft over the years 2022-2024
-                </query>
-    ```
+    # Query Structure:
+    # ```
+    # **Query**: <query>
+    #             Compare the average revenue of Tesla to Microsoft over the years 2022-2024
+    #             </query>
+    # ```
     
-    Your Response:
-    ```
-    **Companies** = ['Tesla', 'Microsoft']
-    **Years** = [2022, 2023, 2024]
-    **Quarters** = []
-    ```
+    # Your Response:
+    # ```
+    # **Companies** = ['Tesla', 'Microsoft']
+    # **Years** = [2022, 2023, 2024]
+    # **Quarters** = []
+    # ```
     
-    ### Example Query 3
+    # ### Example Query 3
     
-    Query Structure:
-    ```
-    **Query**: <query>
-                How did Tesla perform during Q2 of 2024?
-                </query>
-    ```
+    # Query Structure:
+    # ```
+    # **Query**: <query>
+    #             How did Tesla perform during Q2 of 2024?
+    #             </query>
+    # ```
     
-    Your Response:
-    ```
-    **Companies** = ['Tesla']
-    **Years** = [2024]
-    **Quarters** = ['Q2']
-    ```
+    # Your Response:
+    # ```
+    # **Companies** = ['Tesla']
+    # **Years** = [2024]
+    # **Quarters** = ['Q2']
+    # ```
     
-    Here is the real user query I would like for you to handle as described above:
+    # Here is the real user query I would like for you to handle as described above:
     
-    **Query**: <query>
-                {message}
-                </query>
-    """
+    # **Query**: <query>
+    #             {message}
+    #             </query>
+    # """
     
-    # get response from Ollama
-    extraction = ollama.generate(model='llama3.1', prompt=extraction_prompt)
-    if debug: print(f"Extraction prompt response: {extraction['response']}")
-    # Use regular expression and the ast library to get the information and turn it into lists
-    companies_match = re.search(r"\*\*Companies\*\*\s*=\s*(\[.*?\])", extraction['response'])
-    years_match = re.search(r"\*\*Years\*\*\s*=\s*(\[.*?\])", extraction['response'])
-    quarters_match = re.search(r"\*\*Quarters\*\*\s*=\s*(\[.*?\])", extraction['response'])
-    companies_list = ast.literal_eval(companies_match.group(1)) if companies_match else []
-    years_list = ast.literal_eval(years_match.group(1)) if years_match else []
-    quarters_list = ast.literal_eval(quarters_match.group(1)) if companies_match else []
+    # # get response from Ollama
+    # extraction = ollama.generate(model='llama3.1', prompt=extraction_prompt)
+    # if debug: print(f"Extraction prompt response: {extraction['response']}")
+    # # Use regular expression and the ast library to get the information and turn it into lists
+    # companies_match = re.search(r"\*\*Companies\*\*\s*=\s*(\[.*?\])", extraction['response'])
+    # years_match = re.search(r"\*\*Years\*\*\s*=\s*(\[.*?\])", extraction['response'])
+    # quarters_match = re.search(r"\*\*Quarters\*\*\s*=\s*(\[.*?\])", extraction['response'])
+    query_details = extract_query_details(message)
+    
+
+    companies_list = query_details["Companies"]
+    years_list = query_details["Years"]
+    quarters_list = query_details["Quarters"]
     if debug:
         print(companies_list)
         print(years_list)
         print(quarters_list)
     
     # Perform Retrieval and get top n chunks
-    return retrieve_n(message, n, companies_list, years_list, quarters_list, hybrid_search=hybrid_search)
+    return retrieve_n(message, n, companies_list, years_list, quarters_list, hybrid_search=hybrid_search, chunk_filter=chunk_filtering, verbose = verbose)
 
 def generation_step(message = "", top_n = None, eval = False, debug = False):
     """Function to perform the generation step of the RAG pipeline. 
@@ -254,7 +320,7 @@ def run_llm(n = 5, debug = False):
                 conn.close()
                 break
             
-            top_n = retrieval_step(message = message, n = n, hybrid_search=False)
+            top_n = retrieval_step(message = message, n = n, hybrid_search=True, chunk_filtering=True)
             
             if debug: print(top_n)
             

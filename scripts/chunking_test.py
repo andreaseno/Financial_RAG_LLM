@@ -1,6 +1,6 @@
 from chunking import chunk_markdown
 
-file_path = "/Users/oga/Desktop/gwu_stuff/Masters Stuff/LLM Research/md_files/Meta/2023/10Q_10K/10Q-Q2-2023.pdf.md"
+file_path = "/Users/oga/Desktop/gwu_stuff/Masters Stuff/LLM Research/md_files/Nvidia/2022/10Q_10K/10Q-Q1-2022.pdf.md"
 
 with open(file_path, 'r', encoding='utf-8') as file:
     content = file.read()

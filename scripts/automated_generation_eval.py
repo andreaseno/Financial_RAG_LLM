@@ -3,6 +3,9 @@ from datetime import datetime, timedelta, date
 from llm import retrieval_step, generation_step
 import re
 from funcs import write_debug_log
+import math
+from dateutil.relativedelta import relativedelta
+import pandas as pd
 
 # I want to use stock performance to generate baseline performance labels for periods of time, 
 # and then ask the LLM "how did {insert company} perform during the period {insert time period}" 
@@ -11,21 +14,37 @@ from funcs import write_debug_log
 # querying finance for that data and making assumptions based on conditions.
 
 # Global debug log name to write debug statements
-debug_file = "auto_gen_eval_log.md"
+debug_file = "test_new_auto_gen_eval_log.md"
 
 # Function to evaluate performance based on calculated values
-def evaluate_performance(percentage_change, volatility, average_daily_volume):
-    percentage_change_threshold = 5  # in percentage
-    volatility_threshold = 5  # in percentage
-    average_daily_volume_threshold = 1000000  # in Shares
-
+def evaluate_performance(eps_growth, revenue_growth, income_growth):
     # Determine performance
-    if (percentage_change > percentage_change_threshold and
-        volatility < volatility_threshold and
-        average_daily_volume > average_daily_volume_threshold):
+    if ((eps_growth > 0 and revenue_growth > 0) or 
+        (eps_growth > 0 and income_growth > 0) or 
+        (revenue_growth > 0 and income_growth > 0)):
         return True  # The company performed well
     else:
         return False  # The company did not perform well
+
+def get_income_statement(ticker):
+    ticker_object = yf.Ticker(ticker)
+    income_stmt = ticker_object.quarterly_income_stmt
+    return income_stmt
+
+def is_in_daterange(current_date, start_date, end_date):
+    """
+    Check if the current_date is within the range start_date to end_date (inclusive).
+
+    Args:
+        current_date (datetime): The date to check.
+        start_date (datetime): The start of the date range.
+        end_date (datetime): The end of the date range.
+
+    Returns:
+        bool: True if current_date is within the range (inclusive), False otherwise.
+    """
+    return start_date <= current_date <= end_date
+
 
 # Function to grab stock prices from yfinance
 def get_stock_prices(ticker, start_date, end_date):
@@ -35,34 +54,59 @@ def get_stock_prices(ticker, start_date, end_date):
 
 # Function to analyze company performance over time period
 def get_company_performance(ticker, start_date, end_date, verbose = False):
-    stock_prices = get_stock_prices(ticker, start_date, end_date)
-    if stock_prices.empty:
+    income_stmt = get_income_statement(ticker)
+    if income_stmt.empty:
         write_debug_log("No stock data found for the given ticker and date range.", log_file=debug_file, with_timestamp=False, print_message=True)
         
         return
+
     # Calculate performance metrics
-    initial_price = stock_prices['Close'].iloc[0]
-    final_price = stock_prices['Close'].iloc[-1]
-    percentage_change = ((final_price - initial_price) / initial_price) * 100
+    metrics = ['Diluted EPS', 'Total Revenue', 'Net Income']
+    growth_data = {metric: 0 for metric in metrics}
+    for current_quarter in income_stmt.columns:
+        if(not is_in_daterange(current_quarter, start_date, end_date)):
+            continue
+        else:
+            if verbose: write_debug_log(f"HERE: current_quarter {current_quarter} is in the range {start_date} to {end_date}", log_file=debug_file, with_timestamp=False, print_message=True)
+        
+        current_value = income_stmt[current_quarter]
+        try:
+            # Get the corresponding quarter from the previous year
+            prior_quarter = current_quarter - pd.DateOffset(years=1)
+            if verbose: print(f"prior: {prior_quarter}")
 
-    # Calculate volatility (standard deviation of daily returns)
-    daily_returns = stock_prices['Close'].pct_change()
-    volatility = daily_returns.std() * 100  # in percentage
+            if prior_quarter in income_stmt.columns:
+                # Calculate growth for each metric
+                return_growth = True
+                for metric in metrics:
+                    current_value = income_stmt[current_quarter].loc[metric]
+                    prior_value = income_stmt[prior_quarter].loc[metric]
+                    
+                    if math.isnan(prior_value):
+                        return_growth = False
+                        continue
+                        
+                    if verbose: write_debug_log(f"curval for {metric}: {current_value}", log_file=debug_file, with_timestamp=False, print_message=True)
+                    if verbose: write_debug_log(f"priorval for {metric}: {prior_value}", log_file=debug_file, with_timestamp=False, print_message=True)
 
-    # Average trading volume
-    average_volume = stock_prices['Volume'].mean()
+                    if prior_value != 0:  # Avoid division by zero
+                        growth = ((current_value - prior_value) / prior_value) * 100
+                    else:
+                        growth = None  # Handle zero prior value
 
-    # Output performance analysis
-    # This is a good place to start, could expand on this by doing comparative analysis to other stocks in the same industry
-    if verbose:
-        write_debug_log(f"Performance Analysis for {ticker}:", log_file=debug_file, with_timestamp=False, print_message=True)
-        write_debug_log(f"Initial Closing Price: ${initial_price:.2f}", log_file=debug_file, with_timestamp=False, print_message=True)
-        write_debug_log(f"Final Closing Price: ${final_price:.2f}", log_file=debug_file, with_timestamp=False, print_message=True)
-        write_debug_log(f"Percentage Change: {percentage_change:.2f}%", log_file=debug_file, with_timestamp=False, print_message=True)
-        write_debug_log(f"Volatility: {volatility:.2f}%", log_file=debug_file, with_timestamp=False, print_message=True)
-        write_debug_log(f"Average Daily Volume: {average_volume:.0f}\n", log_file=debug_file, with_timestamp=False, print_message=True)
+                    # Append the result
+                    growth_data[metric] = growth
+                    
+                    
+                print(growth_data)
+                if return_growth: return evaluate_performance(growth_data[metrics[0]], growth_data[metrics[1]], growth_data[metrics[2]])
+                else: return None
+            else:
+                if verbose: print(f"{current_quarter} does not have prior data")
+        except Exception as e:
+            print(f"Error processing quarter {current_quarter}: {e}")
+    return None
     
-    return evaluate_performance(percentage_change, volatility, average_volume)
 
 
 def get_quarter_start_dates(fiscal_start, year):
@@ -112,19 +156,30 @@ def generation_eval(companies, years, k, verbose = False):
                         continue
                     dates = get_quarter_start_dates(company['fy_start'], year)
                     start_date = dates[quarter]
-                    end_date = start_date + timedelta(days=90)
-                    
-                    today = date.today()
-                    if end_date.date() > today:
-                        continue
+                    end_date = start_date + timedelta(days=92)
+                    if company['offset_year']:
+                        end_date = end_date + relativedelta(years=-1)
+                        start_date = start_date + relativedelta(years=-1)
+                    # today = date.today()
+                    # if end_date.date() > today:
+                    #     write_debug_log(f"end date {end_date}after today", log_file=debug_file, with_timestamp=False, print_message=True)
+                    #     continue
                     
                     if verbose: write_debug_log(f"Automated evaluation for {company['name']} for Q{quarter} of {year} ({start_date.strftime('%m/%d/%Y')} - {end_date.strftime('%m/%d/%Y')}):\n", log_file=debug_file, with_timestamp=False, print_message=True)
 
                     
                     performance = get_company_performance(company['ticker'], start_date, end_date, verbose = verbose)
                     
-                    query = f"Did {company['name']} perform well in Q{quarter} of {year}?"
+                    if performance == None:
+                        write_debug_log(f"Not generating for Q{quarter} of {year} during {start_date} to {end_date}\n\n", log_file=debug_file, with_timestamp=False, print_message=True)
+                        continue
+                    
+                    query = f"Did {company['name']} perform well in Q{quarter} of {year} based on their Earnings Per Share EPS, Total Revenue, and Net Income?"
                     top_n = retrieval_step(message = query, hybrid_search=True, n = k)
+                    
+                    for j, context in enumerate(top_n):
+                        write_debug_log(f"Context {j}: {context}\n\n", log_file=debug_file, with_timestamp=False, print_message=True)
+
                     
                     query += """
                     
@@ -151,12 +206,12 @@ def generation_eval(companies, years, k, verbose = False):
 
                     
                     company_exists = company_counts.get(company['name'], False)
-                    if not company_exists:
+                    if not company_exists and not failure:
                         company_counts[company['name']] = {
                             'count_correct': 0,
                             'count_total': 0
                         }
-                    if performance == value and not failure:
+                    if not failure and performance == value:
                         count_correct += 1
                         company_counts[company['name']]['count_correct'] += 1
                         write_debug_log("LLM performance evaluation Was a SUCCESS\n", log_file=debug_file, with_timestamp=False, print_message=True)
@@ -173,6 +228,7 @@ def generation_eval(companies, years, k, verbose = False):
         write_debug_log(f"total correct percentage = {count_correct/count_total}", log_file=debug_file, with_timestamp=False, print_message=True)
         write_debug_log(message="", log_file=debug_file, with_timestamp=False, print_message=True)
         for c_name, c_count in company_counts.items():
+            
             write_debug_log(f"{c_name}: {c_count['count_correct']}/{c_count['count_total']} - {c_count['count_correct']/c_count['count_total']}", log_file=debug_file, with_timestamp=False, print_message=True)
         write_debug_log("\n"*6, log_file=debug_file, with_timestamp=False, print_message=True)
         
@@ -194,26 +250,26 @@ if __name__ == "__main__":
                 {
                     'name':'Tesla',
                     'ticker':'tsla',
-                    "fy_start":datetime(year = 2024, day=1, month=1)
-                    
+                    "fy_start":datetime(year = 2024, day=1, month=1),
+                    "offset_year":False
                 },
                 {
                    'name':'Apple',
                    'ticker':'aapl',
-                   "fy_start":datetime(year = 2024, day=1, month=10)
+                   "fy_start":datetime(year = 2024, day=1, month=10),
+                    "offset_year":True
                 },
                 {
                    'name':'Nvidia',
                    'ticker':'nvda',
                    "fy_start":datetime(year = 2024, day=1, month=2),
-                   "blacklisted_quarters": [
-                       ("Q3", 2024)
-                   ]
+                    "offset_year":False
                 },
                 {
                    'name':'Microsoft',
                    'ticker':'msft',
-                   "fy_start":datetime(year = 2024, day=1, month=7)
+                   "fy_start":datetime(year = 2024, day=1, month=7),
+                    "offset_year":True
                 },
                 {
                    'name':'Meta',
@@ -221,22 +277,36 @@ if __name__ == "__main__":
                    "fy_start":datetime(year = 2024, day=1, month=1),
                    "blacklisted_quarters": [
                        ("Q1", 2022)
-                   ]
+                   ],
+                    "offset_year":False
                 },
                 {
                    'name':'Amazon',
                    'ticker':'amzn',
-                   "fy_start":datetime(year = 2024, day=1, month=1)
+                   "fy_start":datetime(year = 2024, day=1, month=1),
+                    "offset_year":False
+                },
+                {
+                   'name':'Berkshire Hathaway',
+                   'ticker': "BRK-B",
+                   "fy_start":datetime(year = 2024, day=1, month=1),
+                    "offset_year":False
+                },
+                {
+                   'name':'Google',
+                   'ticker':'GOOG',
+                   "fy_start":datetime(year = 2024, day=1, month=1),
+                    "offset_year":False
                 }
             ]
-    years = [2022, 2023, 2024]
-    num_trials = 5
+    years = [2022, 2023, 2024, 2025]
+    num_trials = 10
     
     # generation_eval(companies, years, True)
     
 
-    for k in range(2,5):
-        debug_file = f"auto_gen_eval_log_posthybrid_k_equals_{k}.md"
+    for k in range(1,2):
+        debug_file = debug_file+f"_k_equals_{k}.md"
         
         overall_average_sum = 0
         
@@ -261,6 +331,7 @@ if __name__ == "__main__":
         write_debug_log(f"Overall Average Across {num_trials} trials: {overall_average_sum/num_trials}\n", log_file=debug_file, with_timestamp=False, print_message=True)
         
         for c_name, c_count in overall_company_sum.items():
-            write_debug_log(f"{c_name}: {c_count['count_correct']}/{c_count['count_total']} - {c_count['count_correct']/c_count['count_total']}", log_file=debug_file, with_timestamp=False, print_message=True)
+            if (c_count['count_total'] > 0):
+                write_debug_log(f"{c_name}: {c_count['count_correct']}/{c_count['count_total']} - {c_count['count_correct']/c_count['count_total']}", log_file=debug_file, with_timestamp=False, print_message=True)
         
     

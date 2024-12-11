@@ -4,7 +4,7 @@ from llm import retrieval_step
 
 # Global Variables
 debug = True
-k = 5
+k = 2
 
 # Connection parameters for pgvector
 host = "localhost"         # Hostname (since you've mapped the container port)
@@ -39,7 +39,7 @@ try:
             print(f"Query: {query}\n")
         # Grab the top n chunks using the same RAG algorithm used in main.py
         # top_n_chunks = run_llm(eval = True, n = 50, eval_query = query)
-        top_n_chunks = retrieval_step(message = query, n = k, hybrid_search=True)
+        top_n_chunks = retrieval_step(message = query, n = k, hybrid_search=True, chunk_filtering=False)
         if debug:
             for j, chunk in enumerate(top_n_chunks):
                 print(f"Chunk {j+1}/{k}:\n {chunk[0]}")

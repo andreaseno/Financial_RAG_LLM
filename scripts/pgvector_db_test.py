@@ -1,5 +1,6 @@
-from pgvector_db_funcs import retrieve_n
+from llm import retrieval_step
 
-sample_query = "What was Apple's revenue in Q3 of 2024?"
+sample_query = "What kind of legal proceedings is apple involved in in 2024??"
 
-retrieve_n(query=sample_query, n = 10, verbose=True)
+# retrieve_n(query=sample_query, n = 10, verbose=True)
+top_n_chunks = retrieval_step(message = sample_query, n = 10, hybrid_search=True, debug=False, verbose=True)
